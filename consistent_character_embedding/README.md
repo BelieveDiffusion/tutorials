@@ -28,11 +28,11 @@ I generate these images via [Automatic1111's Stable Diffusion web UI](https://gi
 
 ## Choosing a checkpoint for generating your input images
 
-You can use any SD checkpoint you like to generate your input images, although it's essential that the model you choose has seen (and can generate) representative examples like your character. I've been creating photorealistic made-up characters, and I've found [Deliberate](https://civitai.com/models/4823/deliberate) (v2) to be a good, flexible model for that, but there are plenty of other models available on sites like [CivitAI](https://civitai.com/).
+You can use any SD checkpoint you like to generate your input images, although it's essential that the model you choose has seen (and can generate) representative examples like your character. I've been creating photorealistic made-up characters, and I've found [Deliberate](https://civitai.com/models/4823/deliberate) (v2) to be a good, flexible checkpoint for that, but there are plenty of other models available on sites like [CivitAI](https://civitai.com/).
 
 ## Turning on the inclusion of tags in the output
 
-We're going to use an input prompt for our input images, which we'll convert into a training prompt later on. To make that conversion process as easy as possible later, turn on "Create a text file next to every image with generation parameters" in A1111's "Settings > Saving images/grids" settings, and then click "Apply settings". This will write out a `.txt` file next to every generated `.png` input image, containing the full input prompt for that image.
+We're going to define an input prompt for generating our input images, which we'll convert into a training prompt later on. To make that conversion process as easy as possible later, turn on "Create a text file next to every image with generation parameters" in A1111's "Settings > Saving images/grids" settings, and then click "Apply settings". This will write out a `.txt` file next to every generated `.png` input image, containing the full input prompt for that image.
 
 ## Setting up an input prompt
 
@@ -179,8 +179,6 @@ Ideally, after doing all of the above, you will have 150(ish) good-quality image
 
 In theory, you can just pass all of your input images to the trainer without any tags, and get a textual inversion embedding out the other side. However, the embedding will be _way_ more flexible as if you spend some time tagging the images first. The good news is, the tags from the generation process above are already halfway to what you need.
 
-The goal with tagging is to tell the training process about all of the things that are _not_ the essence of your character in each image. For example: we generated training images above that had a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to tag each image with "neutral gray background" when it goes into the trainer, so that the trainer knows that "neutral gray background" is not an attribute of our character.
-
 ## Naming your character
 
 The first and most important thing to include in the tagging is the name of the character (and embedding) itself, i.e. the new thing we want SD to learn. Now is a good time to choose a name for your embedding.
@@ -211,15 +209,17 @@ Essentially, the thing we want SD to learn - our character - is the sum total of
 
 ## Tidying up the input prompts
 
-Next, change `(naked:1.3)` in all of the text files to just `naked`, and change `(neutral gray background:1.3)` to just `neutral gray background`. (We don't need to boost these terms in the training tags - we're just stating facts about the generated images).
+One of the goals of tagging is to tell the training process about all of the things that are _not_ the essence of your character in each image. For example: we generated training images above that had a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to tag each image with "neutral gray background" when it goes into the trainer, so that the trainer knows that "neutral gray background" is not an attribute of our character.
 
-Our training prompt is now:
+The good news is, we already have a lot of this detail captured in our existing text files from step 1 above. To tidy up those existing prompts, we can change `(naked:1.3)` in all of the text files to just `naked`, and change `(neutral gray background:1.3)` to just `neutral gray background`. (We don't need to boost these terms in the training tags - we're just stating facts about the generated images).
+
+Our training prompt for an example image is now something like:
 
 ```
 an extreme closeup front shot photo of fr3nchl4dysd15 naked, small breasts, toned body, chin length straight black hair in a bob cut with bangs, neutral gray background, neutral face expression
 ```
 
-This is now (IMHO) a pretty good training prompt… with one exception. We may have _asked_ SD to generate `an extreme closeup front shot photo` for image 17 of 400, but that's no guarantee that it actually gave us what we asked for. So, now for the boring bit: going through each image and checking that the zoom level and viewing angle in the tags actually match the image.
+This is (IMHO) a pretty good training prompt… with one exception. We may have _asked_ SD to generate `an extreme closeup front shot photo` for some image in our initial set of 400 images, but that's no guarantee that SD actually gave us what we asked for. So, now for the boring bit: going through each filtered image and checking that the zoom level and viewing angle in the tags actually match the image.
 
 In many cases, they _will_ match, and you can leave the tags alone; but if they don't match, just edit them until they do. For example, `an extreme closeup front shot photo` might become `a medium closeup side angle photo` if the character isn't that close to the camera, and is turned more to the side.
 
