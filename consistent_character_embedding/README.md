@@ -259,15 +259,146 @@ For the input image generation process above, I usually choose between this subs
 
 # 4. Training an embedding on the input images
 
-[When you create the embedding in the A1111 web interface, you have the option to provide a… I forget what it is, but it's "*" by default. I change that to "woman".]
+With the input images ready, it's time to train the embedding.
 
-[As I understand it, that's saying "the new thing you are about to learn - antonialastnamesd15 - should be learned from a starting point of what you already understand as 'woman'".]
+The first (and easy-to-forget) step is to switch A1111's `Stable Diffusion checkpoint` dropdown to the base Stable Diffusion 1.5 checkpoint. (In my case, this is named `model.ckpt`). You always want to train an embedding against the base checkpoint, so that it is as flexible as possible when applied to any other checkpoint that derives from that base.
 
-[Oh… and I also ended up with antonialastnamesd15 in my prompt twice, because I couldn't get it to work with just filewords, so I used name filewords]
+## Creating a new Embedding
 
-[If she is wearing clothes that you don't want to be part of what you train into the AI, you should also include the clothes in your prompt. You can also crop out the clothing so you'll have images with no clothing in them, even if you don't have naked images.]
+Head over to the `Train` tab in A1111, and select the `Create embedding` sub-tab. Enter the name of your embedding / character (`fr3nchl4dysd15` in our case) in the `Name` box. This primarily defines the name of the output embedding file on disk, but that filename also defines what you will use in your prompts to generate images with your embedding. (If ever you want to change the token that you use in prompts, just rename the embedding on disk.)
 
-[The initialization text is the starting point for your TI, so you could put a more extensive prompt there (hair and eye color, for instance), to give it a good start. Well, if it isn't a feature of what you are trying to train, I wouldn't include it. But, if you want all your output images to have black hair, because that is how your subject is, I would put it in.]
+When you create the embedding in the A1111 web interface, you also have the option to provide some `Initialization text`. By default this is `*` (an asterisk), which is a wildcard that does not provide any specific starting point for the training. I always change this to `woman`. My understanding is that this sets the starting point of your custom embedding's training to be everything that SD has already learned about the word `woman` from looking at millions of images from the Internet. In other words, it doesn't need to learn the woman-ness of the subject in the images; it just needs to learn the specific person-ness of your character.
+
+Next up is the `Number of vectors per token` count. I always set this to `8`, which seems to work well for the number of input images I use. As I understand it, this is kind of the "capacity" of the embedding to store learned details of your character. Too low a vector count, and the embedding struggles to capture the essence of the character; too high a count, and it learns too much. (The count also seems to be related to, or at least sensitive to, the number of input images.)
+
+It's also important not to set the number of vectors too high, because this number eats into the total number of vector details that can be used in a prompt before reaching the SD limit of 75. I figure that 8 vectors for the character leaves 67 for the prompt, so it's not too bad.
+
+Finally, I always check the `Overwrite Old Embedding` checkbox, so that if I mess things up with the training, and need to recreate an empty embedding to start over, I won't need to remember to check the box each time.
+
+With all of that set, click `Create embedding` to write a new, empty embedding `fr3nchl4dysd15.pt` inside the `/embeddings` folder of your A1111 installation, ready for training.
+
+Here's how all of those settings look in A1111:
+
+![Create embedding settings](images/step_4_create_embedding_settings.jpg)
+
+## Training the embedding
+
+Next, head over to the `Train` sub-tab.
+
+### Basic settings
+
+Select the embedding you just created in the `Embedding` drop-down.
+
+You can ignore the `Hypernetwork` dropdown and the `Hypernetwork Learning rate` field - those are only used when training a Hypernetwork, which we're not doing here.
+
+`Embedded Learning rate` is a finicky beast. Many tutorials advise setting this to a value that changes over time, but I've had good success keeping it constant. For 150 images, I set the learning rate to `0.002`.
+
+I leave `Gradient Clipping` as `disabled`, and leave the value as `1`.
+
+### Batch size and gradient accumulation steos
+
+Next up is `Batch size` and `Gradient accumulation steps`. These two settings (multiplied together) define how many images the trainer looks at before updating its understanding of what `fr3nchl4dysd15` means. I've seen quite a few tutorials that recommend setting these values higher than the defaults of `1` and `1`. If you do, `Batch size` will define how many images are loaded onto your GPU at once for learning, and `Gradient accumulation steps` will define how many of those batches are viewed by the trainer before updating its understanding of the concept it is learning. However, every time I tried using different (higher) values in these settings, I found that the output embedding did not generate images that matched the input images as closely as I would like (indeed, the higher the numbers, the more the variance). So I now always use the default values of `1` and `1`.
+
+`Dataset directory` should be set to the path on disk (accessible to A1111) where the input images and tagging text files are stored.
+
+I usually leave `Log directory` at the default value.
+
+### Prompt template
+
+`Prompt template` is really important to change. If you leave it at the default of `style_filewords.txt`, SD will learn the _style_ of your input images, not the subject (i.e. the character) they contain. The prompt template tells SD how to make the input training prompt for each image in your `Dataset directory`, and so it's important to get it right.
+
+I've actually made my own prompt template, which goes in the `textual_inversion_templates` folder of your A1111 installation. I call it `subject_filewords_double.txt`, and it contains just the following text:
+
+```
+[name], [filewords]
+```
+
+This file gets translated by SD into a training prompt for each input image. `[name]` is translated into the name of the embedding (`fr3nchl4dysd15`), and `[filewords]` is translated into the contents of the tagging text file for that image. So, for one of our images, the training prompt might be:
+
+```
+fr3nchl4dysd15, an extreme closeup front shot photo of fr3nchl4dysd15 naked, small breasts, toned body, chin length straight black hair in a bob cut with bangs, neutral gray background, neutral face expression
+```
+
+You might notice that this includes the text `fr3nchl4dysd15` twice, and you would be correct. I tried using just `[filewords]` as the contents of the template, but that triggers a bug in A1111 that causes training to fail. And so, I use `[name], [filewords]` instead. I'm not _entirely_ sure what the impact of having the embedding token in there twice is, but I do know that it's working well for me, so I'm sticking with it.
+
+### Image size
+
+Leave the `Width` and `Height` at their default values of `512`. There's no need to check the `Do not resize images` checkbox, because they don't need resizing anyway.
+
+### Steps
+
+With all of the settings above, and an image dataset of 150 images, I find that the model tends to become well-trained somewhere between 50-150 training steps. To that end, I normally set `Max steps` to `200`.
+
+For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to either `10`, `5`, or `1`. Setting a value of `10` will train more quickly, because SD isn't pausing to generate a "how am I doing?" image and embedding every single step. However, it means that you also only have "marker" embeddings to select from every ten steps of the generation process. Setting a value of `5` saves an image and embedding twice as often, giving more scope for picking just the right "goldilocks" iteration. Setting the values to `1` gives you an embedding at every step, at the cost of even more generation time.
+
+### Training options
+
+I leave `Use PNG alpha channel as loss weight` unchecked.
+
+I leave `Save images with embedding in PNG chunks` checked.
+
+I usually check the `Read parameters (prompt, etc...) from txt2img tab when making previews` checkbox, so that I can provide a custom "test" prompt to see how the embedding is progressing. More on that below.
+
+I leave `Shuffle tags by ',' when creating prompts` unchecked, and leave `Drop out tags when creating prompts` at `0`. I've heard that this can provide more flexibility to the range of input prompts that can be used with an embedding, but I prefer to keep the prompts in the exact order and format I authored them, so I don't enable these options.
+
+Finally, I leave `Choose latent sampling method` at `once`.
+
+### Training settings summary
+
+Here's how all of those settings look in A1111:
+
+![Training settings](images/step_4_train_settings.jpg)
+
+## Providing a custom testing prompt
+
+Before you click the `Train Embedding` button, there's one more thing to set up. Remember above how we checked the `Read parameters (prompt, etc...) from txt2img tab when making previews` box? Well, that enables us to provide a custom `txt2img` prompt for use when making a "how is the training going?" image every N steps.
+
+### Defining the prompt
+
+Head back over to the `txt2img` tab, and set the `Prompt` text field to:
+
+```
+an extreme closeup color photo of fr3nchl4dysd15 in a forest
+```
+
+This prompt serves two purposes:
+
+1. It enables us to spot when the embedding starts to generate people for a prompt of `fr3nchl4dysd15` who look like our character. (Requesting `an extreme closeup` makes it much more likely that the test images generated during training will give us a good look at our character's face.)
+
+2. It enables us to spot if and when the embedding starts to over-train. If you stop seeing a forest (or something like a forest) in the background, and instead start to see gray backgrounds in multiple images in a row, then you've probably reached the point where the embedding is already overtrained (which means you can interrupt any further training and switch over to selecting an iteration to use).
+
+### Other test prompt settings
+
+With the prompt in place, update any other settings as follows:
+
+- Negative prompt: empty
+- Sampling method: Euler A
+- Sampling steps: 20
+- Restore Faces: Off
+- Tiling: Off
+- Hires. fix: Off
+- Width: 512
+- Height: 512
+- Batch count: 1
+- Batch size: 1
+- CFG Scale: 7
+- Seed: -1
+- ControlNet: off
+- Script: None
+
+These settings are optimized for speed (`Euler A`, `20` sampling steps) rather than quality, and for showing the "essence" of what SD is learning as `fr3nchl4dysd15` (a very simple prompt, with no negative). They are only going to be used for generating images that let us keep an eye on how the training is going, so we don't need them to be perfect.
+
+Here's how all of those settings look in A1111:
+
+![Training settings](images/step_4_txt2img_settings.jpg)
+
+## Running the training
+
+With all of that in place, head back over to the `Train` tab / the `Train` subtab, and click the `Train Embedding` to (finally!) start the training.
+
+The training process will first prepare your dataset (the images) for training. It will then start the training itself, generating a (probably not great quality) image every N steps.
+
+Don't worry if some of the images are weird, or don't even contain a person; that's normal, in my experience. However, at some point you should start to see a majority of images that look roughly like your input character. (Don't worry if the hairstyle doesn't match; we specified that separately in the training prompt, so SD isn't learning it as a fundamental part of what `fr3nchl4dysd15` means.)
 
 # 5. Choosing and validating a particular iteration of the trained embedding
 
