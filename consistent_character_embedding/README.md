@@ -2,13 +2,13 @@
 
 One of the great things about generating images with Stable Diffusion ("SD") is the sheer variety and flexibility of images it can output. However, some times it can be useful to get a _consistent_ output, where multiple images contain the "same person" in a variety of permutations.
 
-To that end, I've spent some time working on a technique for training Standard Diffusion to generate consistent "made-up" characters whose faces, bodies, and hair look essentially the same whenever you use them in a prompt. This tutorial is a description of the approach I use.
+To that end, I've spent some time working on a technique for training Standard Diffusion to generate consistent made-up characters whose faces, bodies, and hair look essentially the same whenever you use them in a prompt. This tutorial is a description of the approach I use.
 
 You can see [all of the "LastName" characters I've trained with this method on CivitAI](https://civitai.com/user/BelieveDiffusion). And credit where it's due - they were inspired by the [Nobody series by Zovya](https://civitai.com/tag/znobody). Thank you for the inspiration, Zovya!
 
 ## Goals
 
-If all goes to plan, by the end of this tutorial you will have created a Standard Diffusion [Textual Inversion embedding](https://arxiv.org/abs/2208.01618) that can reliably recreate your character across multiple poses, SD checkpoints, hair styles, body types, and prompts.
+If all goes to plan, by the end of this tutorial you will have created a Standard Diffusion [Textual Inversion embedding](https://arxiv.org/abs/2208.01618) that can reliably recreate a consistent character across multiple poses, SD checkpoints, hair styles, body types, and prompts.
 
 ## Process
 
@@ -46,7 +46,7 @@ For this input prompt, I've boosted the strength of the `naked` prompt token, to
 
 Replace `%your character's look%`, `%your character's body shape%`, and `%your character's hairstyle%` in the prompt with descriptions that will reliably generate a face, body, and hairstyle that match your target character.
 
-Be descriptive, but try to stay within the `75/75` limit of A1111's input prompt box. The fewer essential details you provide, the more chance there is that those details will be present in every image you generate. And the facial details are really the ones that matter.
+Be descriptive, but try to stay within the `75/75` limit of A1111's input prompt box. The fewer essential details you provide, the more chance there is that those details will be present in every image you generate. (And the facial details are the ones that really matter.)
 
 One tip I've learned from experience: adding a country of origin can really help to hone in on an overall base look, which you can then refine with more details. (A country of origin may also guide your character's overall skin tone, too.)
 
@@ -132,15 +132,13 @@ Here's a reduced version of the entire output of this initial step when I ran it
 
 # 2. Filtering input images
 
-You now have 400 _possibly_ good images that _possibly_ look like the character you're trying to create. If you want to skip the generation step above, here's a zip file of the 400 images I generated while writing this tutorial, together with their text files.
-
-The next step is to filter these 400 images down to ~150 _definitely_ good images to train with. Here's how I do that.
+You now have 400 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 400 images down to ~150 _definitely_ good images to train with. Here's how I do that.
 
 ## Remove any images that are obviously off-prompt
 
 Here, I'd remove images where the character is clothed, or wearing jewelry, or has a non-matching hairstyle, or has their face off-screen, or the background isn't gray, or the arms / legs are funky, or there are multiple people, or… basically, anything that isn't what we asked for.
 
-Here's an example of some of the images I removed from my set of 400 at this step in the process. Note that I removed any images where the hairstyle did not have the requested bangs (fringe), to ensure consistency in the input images later on. This first pass removed 45 images. (Check the image alt tags for the reasons why I removed them.)
+Here's an example of some of the images I removed from my set of 400 at this step in the process. Note that I removed any images where the hairstyle did not have the requested bangs (fringe), to ensure consistency in the training images later on. This first pass removed 45 images. (Check the image alt tags for the reasons why I removed them.)
 
 <img src="images/step_2a_example_removal_1.png" width="128" height="128" alt="Non-matching hairstyle (doesn't have bangs)">
 <img src="images/step_2a_example_removal_2.png" width="128" height="128" alt="Non-neutral background">
@@ -164,7 +162,7 @@ This might seem like a weird thing to say. This person doesn't exist! How do we 
 
 Well: that's for you to define. There will usually be an overall "look" to the character already by this point, and some of the images won't match that look nearly as well as the others. So, filter those images out, and narrow in on the look of the specific person you're trying to create.
 
-For reference, I cut another 119 images in this step. This was partly because I decided to enforce a slightly more consistent hair length for the bob, and partly from honing in on the look of the character. Here are some examples. (And I should stress that this is _not_ an exact science.)
+For reference, I cut another 119 images in this step. This was partly because I decided to enforce a slightly more consistent hair length for the bob haircut, and partly because I used this stage to really hone in on the look of the character. Here are some examples of the images I cut. (And I should stress that this is _not_ an exact science.)
 	
 <img src="images/step_2c_example_removal_1.png" width="128" height="128" alt="Didn't match character look; hair too short">
 <img src="images/step_2c_example_removal_2.png" width="128" height="128" alt="Didn't match character look; hair too short">
@@ -179,7 +177,7 @@ Ideally, after doing all of the above, you will have 150(ish) good-quality image
 
 # 3. Tagging input images
 
-In theory, you can just pass all of your input images to the trainer without any tags, and get a textual inversion embedding out the other side. However, the embedding will be _way_ more flexible as if you spend some time tagging the images first. The good news is, the tags from the generation process above are already halfway to what you need.
+In theory, you can just pass all of your input images to the trainer without any tags, and get a textual inversion embedding out the other side. However, a little bit of tweaking and simplifying of the training tags will go a long way to improving the output.
 
 ## Naming your character
 
@@ -189,45 +187,57 @@ You're looking for a single word (more precisely, a _token_) to name the embeddi
 
 If you're not sure your choice of embedding name / token is unique enough, just try sticking it in a `txt2img` prompt all by itself, and generating a few images with the base SD1.5 checkpoint to see what SD thinks that token already means.
 
-For the purposes of this tutorial, let's call the character `fr3nchl4dysd15`. To add that name to your tags, in the text file for each generated image, replace:
+For the purposes of this tutorial, let's call our character `fr3nchl4dysd15`.
+
+## Removing the character description
+
+For each of the generated images, we can remove nearly all of the detail from the generation prompt in order to make a training prompt. Specifically, we can remove the following:
+
+- the character's look
+- the character's body shape
+- the character's hairstyle
+
+…because we want SD to learn that all of those things combined are known as `fr3nchl4dysd15`.
+
+(Training the body shape and hairstyle as part of the character does remove a _little_ bit of the flexibility from the embedding, but I've found that in practice I can still change the body style and hairstyle after the event pretty easily with a more detailed prompt, and including these things in the essence of the character makes it much easier and quicker to generate consistent outputs without spending future prompt tokens on the things we want to become part of our character's default style.)
+
+To that end, we can simplify the prompt text files with some global search-and-replace. For example:
 
 ```
-a beautiful 25yo French woman with defined cheekbones, a straight nose, full lips, hazel eyes, chin dimple, square jaw, plucked eyebrows
+an extreme closeup front shot photo of a beautiful 25yo French woman with defined cheekbones, a straight nose, full lips, hazel eyes, chin dimple, square jaw, plucked eyebrows, (naked:1.3), small breasts, toned body, chin length straight black hair in a bob cut with bangs, (neutral gray background:1.3), neutral face expression
 ```
 
-…with…
+…should become:
 
 ```
-fr3nchl4dysd15
+an extreme closeup front shot photo of fr3nchl4dysd15, (naked:1.3), (neutral gray background:1.3), neutral face expression
 ```
 
-…giving (for example):
-
-```
-an extreme closeup front shot photo of fr3nchl4dysd15 (naked:1.3), small breasts, toned body, chin length straight black hair in a bob cut with bangs, neutral gray background, neutral face expression
-```
-
-Essentially, the thing we want SD to learn - our character - is the sum total of all of those attributes combined. So, we replace those attributes from the input prompt with the character's embedding name, to form the basis of our training prompt. (It's kind of like saying "a photo of Marilyn Monroe", but instead of using the name "Marilyn Monroe", we're using the made-up name "`fr3nchl4dysd15`".)
+Essentially, the thing we want SD to learn - our character - is the sum total of all of those removed attributes combined. It's kind of like saying we have "a photo of Marilyn Monroe", but instead of using the name "Marilyn Monroe", we're using the made-up name "`fr3nchl4dysd15`".
 
 ## Tidying up the input prompts
 
-One of the goals of tagging is to tell the training process about all of the things that are _not_ the essence of your character in each image. For example: we generated training images above that had a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to tag each image with "neutral gray background" when it goes into the trainer, so that the trainer knows that "neutral gray background" is not an attribute of our character.
+One of the goals of tagging is to tell the training process about all of the things that are _not_ the essence of your character in each image. For example: we generated training images above that had a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to keep the "neutral gray background" tag when each image is used for training, so that the trainer knows that "neutral gray background" is not an attribute of our character.
 
-The good news is, we already have a lot of this detail captured in our existing text files from step 1 above. To tidy up those existing prompts, we can change `(naked:1.3)` in all of the text files to just `naked`, and change `(neutral gray background:1.3)` to just `neutral gray background`. (We don't need to boost these terms in the training tags - we're just stating facts about the generated images).
+The good news is, we already have this detail captured in our existing text files from step 1 above. To tidy up those existing prompts, we can change `(naked:1.3)` in all of the text files to just `naked`, and change `(neutral gray background:1.3)` to just `neutral gray background`. (We don't need to boost these terms in the training tags - we're just stating facts about the generated images).
 
-Our training prompt for an example image is now something like:
+We can also remove the requested viewing angles from the generation prompt, because they're not something we really need SD to learn - they were more to ensure we got a varied set of input images from step 1 above. (I still choose to keep the zoom levels in the training prompts, however - more on that below.)
+
+And finally, we can remove `neutral face expression` from the prompt. Again, we don't need to train SD on this fact - the absence of a facial expression is implicit from its omission from the training prompt. (We only specified it in the generation prompt in step 1 to ensure we got neutral expressions to train on.)
+
+After all of the above, our training prompt for an example image now becomes simply (for example):
 
 ```
-an extreme closeup front shot photo of fr3nchl4dysd15 naked, small breasts, toned body, chin length straight black hair in a bob cut with bangs, neutral gray background, neutral face expression
+an extreme closeup photo of fr3nchl4dysd15 naked, neutral gray background
 ```
 
-This is (IMHO) a pretty good training prompt… with one exception. We may have _asked_ SD to generate `an extreme closeup front shot photo` for some image in our initial set of 400 images, but that's no guarantee that SD actually gave us what we asked for. So, now for the boring bit: going through each filtered image and checking that the zoom level and viewing angle in the tags actually match the image.
+This is (IMHO) a pretty good training prompt… with one exception. We may have _asked_ SD to generate `an extreme closeup photo` for some image in our initial set of 400 images, but that's no guarantee that SD actually gave us what we asked for. So, now for the boring bit: going through each filtered image and checking that the zoom level actually matches the image.
 
-In many cases, they _will_ match, and you can leave the tags alone; but if they don't match, just edit them until they do. For example, `an extreme closeup front shot photo` might become `a medium closeup side angle photo` if the character isn't that close to the camera, and is turned more to the side.
+## Tidying up the zooms
 
-### Tidying up the zooms
+In many cases, the zoom _will_ match, and you can leave the tags alone. If it doesn't match, simply edit the tag.
 
-There's no exact science to what these zoom definitions mean. I found [the framing image from this article](https://www.studiobinder.com/blog/cowboy-shot-examples-types-of-shots-in-film/) to be a very useful guide. Here's how I apply the zooms, working from widest angle to closest:
+There's no exact science to what these zoom definitions mean. Here's how I apply the zooms, working from widest angle to closest:
 
 1. Can you see the knees? If so, it's probably `"a full body"` photo.
 2. Can you see the waist? If so, it's probably `"a medium shot"` photo.
@@ -235,45 +245,21 @@ There's no exact science to what these zoom definitions mean. I found [the frami
 4. Can you see the neck area? If so, it's probably `"a medium closeup"` photo.
 5. If none of the above, it's probably `"an extreme closeup"` photo.
 
-### Tidying up the viewing angles
-
-This is also not an exact science. Here's how I define it (but who knows if I'm right), again from top to bottom:
-
-1. Can you see any of the character's back (at all)? If so, it's a `"rear angle"` photo.
-2. Are the character's shoulders turned at an angle (like, more that 15°) from the camera? If so, it's a `"side angle"` photo.
-3. Did you request a `"shot from above"` angle, and the character looks like they are lying on their back, or sitting / kneeling and looking up at the camera? If so, it's a `"shot from above"` photo.
-4. Is the camera obviously looking up at the character from below their chest area? If so, it's a `"low angle shot"` photo.
-5. If none of the above, it's a `"front shot"` photo (which will probably be the majority of your images).
-
-## Adding posture information
-
-For my LastName characters, I've also chosen to include posture information in the training tags. This is a time-consuming pain to add to 150 images, but (I assume?) makes things more flexible. I don't have any science to back that up, so feel free to skip this section if you don't want to do even more tagging.
-
-For the input image generation process above, I usually choose between this subset of the postures from the [Unstable Diffusion tagging white paper](https://docs.google.com/document/d/1-DDIHVbsYfynTp_rsKLu4b2tSQgxtO5F6pNsNla12k0/edit) when tagging my images:
-
-- `standing`
-- `lying on her back`
-- `lying on her front`
-- `lying on her side`
-- `bent over`
-- `on all fours`
-- `kneeling`
-
 # 4. Training an embedding on the input images
 
-With the input images ready, it's time to train the embedding.
+With the input images generated and tagged, it's time to train the embedding.
 
-The first (and easy-to-forget) step is to switch A1111's `Stable Diffusion checkpoint` dropdown to the base Stable Diffusion 1.5 checkpoint. (In my case, this is named `model.ckpt`). You always want to train an embedding against the base checkpoint, so that it is as flexible as possible when applied to any other checkpoint that derives from that base.
+The first (and easiest to forget) step is to switch A1111's `Stable Diffusion checkpoint` dropdown to the base Stable Diffusion 1.5 checkpoint. (In my case, this is named `model.ckpt`). You always want to train an embedding against the base checkpoint, so that it is as flexible as possible when applied to any other checkpoint that derives from the SD 1.5 base.
 
 ## Creating a new Embedding
 
 Head over to the `Train` tab in A1111, and select the `Create embedding` sub-tab. Enter the name of your embedding / character (`fr3nchl4dysd15` in our case) in the `Name` box. This primarily defines the name of the output embedding file on disk, but that filename also defines what you will use in your prompts to generate images with your embedding. (If ever you want to change the token that you use in prompts, just rename the embedding on disk.)
 
-When you create the embedding in the A1111 web interface, you also have the option to provide some `Initialization text`. By default this is `*` (an asterisk), which is a wildcard that does not provide any specific starting point for the training. I always change this to `woman`. My understanding is that this sets the starting point of your custom embedding's training to be everything that SD has already learned about the word `woman` from looking at millions of images from the Internet. In other words, it doesn't need to learn the woman-ness of the subject in the images; it just needs to learn the specific person-ness of your character.
+When you create the embedding in the A1111 web interface, you also have the option to provide some `Initialization text`. By default this is `*` (an asterisk), which is a wildcard that does not provide any specific starting point for the training. I always change this to `woman`. My understanding is that this sets the starting point of your custom embedding's training to be everything that SD has already learned about the word `woman` from looking at millions of images from the Internet. In other words, it doesn't need to learn the woman-ness of the subject in the images; it just needs to learn the specific person-ness of your female character.
 
 Next up is the `Number of vectors per token` count. I always set this to `8`, which seems to work well for the number of input images I use. As I understand it, this is kind of the "capacity" of the embedding to store learned details of your character. Too low a vector count, and the embedding struggles to capture the essence of the character; too high a count, and it learns too much. (The count also seems to be related to, or at least sensitive to, the number of input images.)
 
-It's also important not to set the number of vectors too high, because this number eats into the total number of vector details that can be used in a prompt before reaching the SD limit of 75. I figure that 8 vectors for the character leaves 67 for the prompt, so it's not too bad.
+It's also important not to set the number of vectors per token _too_ high, because this number eats into the total number of vectors that can be used in a prompt before reaching the SD limit of 75. I figure that 8 vectors for the character leaves 67 for the prompt, so it's not too bad.
 
 Finally, I always check the `Overwrite Old Embedding` checkbox, so that if I mess things up with the training, and need to recreate an empty embedding to start over, I won't need to remember to check the box each time.
 
@@ -285,11 +271,13 @@ Here's how all of those settings look in A1111:
 
 ## Training the embedding
 
-Next, head over to the `Train` sub-tab.
+Next, head over to the `Train` sub-tab. I'll cover all of the training settings below, but if you just want a summary, here's how my settings look in A1111:
+
+![Training settings](images/step_4_train_settings_1_step_200.jpg)
 
 ### Basic settings
 
-Select the embedding you just created in the `Embedding` drop-down.
+Select the embedding you just created (`fr3nchl4dysd15`) in the `Embedding` drop-down.
 
 You can ignore the `Hypernetwork` dropdown and the `Hypernetwork Learning rate` field - those are only used when training a Hypernetwork, which we're not doing here.
 
@@ -297,11 +285,11 @@ You can ignore the `Hypernetwork` dropdown and the `Hypernetwork Learning rate` 
 
 I leave `Gradient Clipping` as `disabled`, and leave the value as `1`.
 
-### Batch size and gradient accumulation steos
+### Batch size and gradient accumulation steps
 
-Next up is `Batch size` and `Gradient accumulation steps`. These two settings (multiplied together) define how many images the trainer looks at before updating its understanding of what `fr3nchl4dysd15` means. I've seen quite a few tutorials that recommend setting these values higher than the defaults of `1` and `1`. If you do, `Batch size` will define how many images are loaded onto your GPU at once for learning, and `Gradient accumulation steps` will define how many of those batches are viewed by the trainer before updating its understanding of the concept it is learning. However, every time I tried using different (higher) values in these settings, I found that the output embedding did not generate images that matched the input images as closely as I would like (indeed, the higher the numbers, the more the variance). So I now always use the default values of `1` and `1`.
+Next up is `Batch size` and `Gradient accumulation steps`. These two settings (multiplied together) define how many images the trainer looks at before updating its understanding of what `fr3nchl4dysd15` means. I've seen quite a few tutorials that recommend setting these values higher than the defaults of `1` and `1`. If you do, `Batch size` will define how many images are loaded onto your GPU at once for learning, and `Gradient accumulation steps` will define how many of those batches are viewed by the trainer before updating its understanding of the concept it is learning. However, every time I tried using different (higher) values in these settings, I found that the output embedding did not generate images that matched the input images as closely as I would like (indeed, the higher the numbers, the more the variance). So I always use the default values of `1` and `1`.
 
-`Dataset directory` should be set to the path on disk (accessible to A1111) where the input images and tagging text files are stored.
+`Dataset directory` should be set to the path on disk (accessible to A1111) where the input images and tagging text files are stored. This can be whatever you like.
 
 I usually leave `Log directory` at the default value.
 
@@ -315,10 +303,10 @@ I've actually made my own prompt template, which goes in the `textual_inversion_
 [name], [filewords]
 ```
 
-This file gets translated by SD into a training prompt for each input image. `[name]` is translated into the name of the embedding (`fr3nchl4dysd15`), and `[filewords]` is translated into the contents of the tagging text file for that image. So, for one of our images, the training prompt might be:
+This file gets translated by SD into a training prompt for each input image. `[name]` is translated into the name of the embedding (`fr3nchl4dysd15`), and `[filewords]` is translated into the contents of the tagging text file for that image. So, for one of our images, the combined training prompt from this text file might be:
 
 ```
-fr3nchl4dysd15, an extreme closeup front shot photo of fr3nchl4dysd15 naked, small breasts, toned body, chin length straight black hair in a bob cut with bangs, neutral gray background, neutral face expression
+fr3nchl4dysd15, an extreme closeup photo of fr3nchl4dysd15 naked, neutral gray background
 ```
 
 You might notice that this includes the text `fr3nchl4dysd15` twice, and you would be correct. I tried using just `[filewords]` as the contents of the template, but that triggers a bug in A1111 that causes training to fail. And so, I use `[name], [filewords]` instead. I'm not _entirely_ sure what the impact of having the embedding token in there twice is, but I do know that it's working well for me, so I'm sticking with it.
@@ -331,7 +319,7 @@ Leave the `Width` and `Height` at their default values of `512`. There's no need
 
 With all of the settings above, and an image dataset of 150 images, I find that the model tends to become well-trained somewhere between 50-150 training steps. To that end, I normally set `Max steps` to `200`.
 
-For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to either `10`, `5`, or `1`. Setting a value of `10` will train more quickly, because SD isn't pausing to generate a "how am I doing?" image and embedding every single step. However, it means that you also only have "marker" embeddings to select from every ten steps of the generation process. Setting a value of `5` saves an image and embedding twice as often, giving more scope for picking just the right "goldilocks" iteration. Setting the values to `1` gives you an embedding at every step, at the cost of even more generation time.
+For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to either `10`, `5`, or `1`. Setting a value of `10` will train more quickly, because SD isn't pausing to generate a "how am I doing?" image and embedding every single step. However, it means that you also only have "marker" embeddings to select from every ten steps of the generation process. Setting a value of `5` saves an image and embedding twice as often, giving more scope for picking just the right "goldilocks" iteration. Setting the values to `1` gives you an embedding at every step, at the cost of more generation time. You're basically trading off flexibility of choosing an iteration against generation time. If in doubt, use `5` for both of these numbers.
 
 ### Training options
 
@@ -345,15 +333,9 @@ I leave `Shuffle tags by ',' when creating prompts` unchecked, and leave `Drop o
 
 Finally, I leave `Choose latent sampling method` at `once`.
 
-### Training settings summary
-
-Here's how all of those settings look in A1111:
-
-![Training settings](images/step_4_train_settings_1_step_200.jpg)
-
 ## Providing a custom testing prompt
 
-Before you click the `Train Embedding` button, there's one more thing to set up. Remember above how we checked the `Read parameters (prompt, etc...) from txt2img tab when making previews` box? Well, that enables us to provide a custom `txt2img` prompt for use when making a "how is the training going?" image every N steps.
+Before you click the `Train Embedding` button, there's one more thing to set up. Remember above how we checked the `Read parameters (prompt, etc...) from txt2img tab when making previews` box? Well, that enables us to provide a custom `txt2img` prompt for use when making a "how is the training going?" image every N steps. This gives us more control over the "test" images that are created during the training process.
 
 ### Defining the prompt
 
@@ -396,25 +378,25 @@ Here's how all of those settings look in A1111:
 
 ## Running the training
 
-With all of that in place, head back over to the `Train` tab / the `Train` subtab, and click the `Train Embedding` to (finally!) start the training.
+With all of that in place, head back over to the `Train` tab / the `Train` subtab, and click the orange `Train Embedding` button to (finally!) start the training.
 
-The training process will first prepare your dataset (the images) for training. It will then start the training itself, generating a (probably not great quality) image every N steps.
+The training process will first prepare your dataset (the images) for training. It will then start the training, generating an image every N steps.
 
-Don't worry if some of the images are weird, or don't even contain a person; that's normal, in my experience. However, at some point you should start to see a majority of images that look roughly like your input character. (Don't worry if the hairstyle doesn't match; we specified that separately in the training prompt, so SD isn't learning it as a fundamental part of what `fr3nchl4dysd15` means.)
+Don't worry if some of the images are weird, or don't even contain a person; that's normal, in my experience. However, at some point you should start to see a majority of images that increasingly look like your input character.
 
 # 5. Choosing and validating a particular iteration of the trained embedding
 
 Okay! We're nearly there. The final step is to identify the "Goldilocks" iteration of our trained embedding - the one where it is "just right". We're looking for an iteration where prompts for `fr3nchl4dysd15` generate an image that looks like our character (so it's "not too cold"), without showing generation artifacts where the character looks over-stylized or distorted (so it's "not too hot").
 
-To put it another way: training a Textual Inversion embedding is a bit like baking cookies. If you don't bake them for long enough, then they don't look like cookies - they're still just raw dough. But if you bake them for too long, they look burned and frazzled, and they're not going to be good to eat. What you're looking for is the training iteration of your embedding that is the perfect cookie - baked, but not over-baked.
+To put it another way: training a Textual Inversion embedding is a bit like baking cookies. If you don't bake them for long enough, then they don't look like cookies - they're still raw dough. But if you bake them for too long, they become burned and frazzled, and they're not going to be good to eat. What you're looking for is the training iteration of your embedding that is the perfect cookie - baked, but not over-baked.
 
-## Finding out when the embedding turned
+## Finding out when the embedding became "good"
 
-The best way to find out when your embedding turned into an embedding of `fr3nchl4dysd15` is to generate a bunch of sample images for the same input seeds with a range of embeddings from the training.
+The best way to find out when your embedding turned into an embedding of `fr3nchl4dysd15` is to generate a bunch of sample images, for the same input seeds. with a range of embeddings from different steps in the training process.
 
-If you navigate to A1111's `textual_inversion` folder on disk, and look inside a folder for today's date, you should find a folder named `fr3nchl4dysd15`. I recommend copying this somewhere else on your computer, and naming it so that you can remember which iteration of your training efforts it represents.
+After following the training process from step 4 above, you should be able to navigate to A1111's `textual_inversion` folder on disk, and find a folder for today's date. Inside it, you should find a folder named `fr3nchl4dysd15`. This folder is the results of your training. (I recommend copying the folder somewhere else on your computer, and naming it so that you can remember which iteration of your training efforts it represents.)
 
-Then, copy all of the embeddings (yes, _all_ of them) from that folder into A1111's root-level `embeddings` folder. (This is the folder where A1111 looks for embeddings to use in prompts.) Once they are copied, head over to the `txt2img` tab, and click the "Show/hide extra networks" icon underneath the orange `Generate` button. This will show a bunch of cards for all of the embeddings that A1111 currently knows about. Click the `Refresh` button (to the right of the `Search…` field) to reload the `embeddings` folder, which will inform A1111 about all of the new embeddings you just copied. (If you don't perform this "refresh" step, A1111 won't use your embeddings in its prompts.)
+Next, copy all of the embeddings (yes, _all_ of them) from that folder into A1111's root-level `embeddings` folder. (This is the folder where A1111 looks for embeddings to use in prompts.) Once they are copied, head over to the `txt2img` tab, and click the "Show/hide extra networks" icon underneath the orange `Generate` button. This will show a bunch of cards for all of the embeddings that A1111 currently knows about. Click the `Refresh` button (to the right of the `Search…` field) to reload the `embeddings` folder, which will inform A1111 about all of the new embeddings you just copied. (If you don't perform this "refresh" step, A1111 won't use your embeddings in its prompts.)
 
 Make sure that the list of cards updates to show all of your embeddings, then click the "Show/hide extra networks" icon to hide them all again.
 
@@ -431,16 +413,16 @@ In the `txt2img` tab, set the following generation settings:
 - Height: 512
 - Batch count: 3
 - Batch size: 3
-- CFG Scale: 7
-- Seed: 12345678
-- Grid margins (px): 8
+- CFG Scale: 8 (note: higher than the default)
+- Seed: 12345678 (note: different to the default)
+- Grid margins (px): 16 (note: different to the default)
 
 (The exact value of the seed doesn't matter; the key thing is that it is constant for all of the generations.)
 
-Set the `Prompt` field to:
+I've found this to be an unexpectedly useful prompt for detecting the right `Steps` value to use. Set the `Prompt` field to:
 
 ```
-a medium closeup color portrait photo of fr3nchl4dysd15-20 at the beach
+a medium closeup color portrait photo of fr3nchl4dysd15-20 wearing a bra on a greek island
 ```
 
 Set the `Negative prompt` field to:
@@ -453,7 +435,7 @@ young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, b
 
 We'll start by generating a coarse comparison between every 20 steps of the training, so we can see roughly where the embedding "turned" into our character.
 
-Note that the `Prompt` field specifies a particular generation of the embedding's training - `fr3nchl4dysd15-20`. We know we have a file with the name `fr3nchl4dysd15-20.pt` in the `embeddings` folder, and so that iteration of the embedding training will be used by default with this prompt.
+Note that the `Prompt` field specifies a particular generation of the embedding's training - `fr3nchl4dysd15-20`. We know we have a 20-steps-of-training embedding file with the name `fr3nchl4dysd15-20.pt` in the `embeddings` folder, and so that iteration of the embedding will be used by default with this prompt.
 
 Next, from the `Script` drop-down menu, select `X/Y/Z plot`. Set `X type` to `Prompt S/R`. Set `Y type` and `Z type` to `Nothing`.
 
@@ -463,10 +445,24 @@ Set `X values` to the following (assuming you generated 200 steps when training)
 fr3nchl4dysd15-20, fr3nchl4dysd15-40, fr3nchl4dysd15-60, fr3nchl4dysd15-80, fr3nchl4dysd15-100, fr3nchl4dysd15-120, fr3nchl4dysd15-140, fr3nchl4dysd15-160, fr3nchl4dysd15-180, fr3nchl4dysd15-200
 ```
 
-This tells A1111 to generate a set of 9 images (3x3), substituting each of the embedding training iterations (20, 40, 60, and so on) into the generation process.
+This tells A1111 to generate a set of 9 images (3x3) for each embedding training iteration that was a multiple of 20 (so 20, 40, 60, and so on).
 
-I recommend starting by running this generation against the base Stable Diffusion 1.5 checkpoint, to see when the baseline model shows an understanding of what your character looks like. I also try running it against the model I used to create the original input images (in my case, Deliberate v2).
+I recommend running this against the model you used to create the original input images (in my case, Deliberate v2), or a similar photorealistic model.
 
 With the above settings, the output of the generation (which took several minutes) looked like this for me:
 
-<img src="images/step_5_20_step_comparison_sd15_beach_small.jpg" width="3858" height="444" alt="20-step comparison against SD1.5">
+<img src="images/step_5_20_step_comparison_deliberate_bra_greek_island_small.jpg" width="1938" height="222" alt="20-step comparison against SD1.5">
+
+From this, I decided that 160 steps was the point at which the overall image set all looked like my input images, without (yet) looking like they had become over-baked.
+
+Next, I tried generating a batch of four images (from the same seed) with a variety of checkpoints, to ensure that the embedding I had selected would adapt to multiple potential models. I deliberately generated these images with a non-standard size of 512x768, to see how well the training would adapt. The results looked good and consistent for each checkpoint, which convinced me that my choice of learning steps was good.
+
+![SD15 results](images/step_5_160_sd15_output_greek_beach.jpg)
+
+![Avalon results](images/step_5_160_avalon_output_greek_beach.jpg)
+
+![Deliberate results](images/step_5_160_deliberate_output_greek_beach.jpg)
+
+![GTM Photo results](images/step_5_160_gtmphoto_output_greek_beach.jpg)
+
+![Realistic Vision results](images/step_5_160_realisticvision_output_greek_beach.jpg)
