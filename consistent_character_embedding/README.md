@@ -523,15 +523,19 @@ Next, turn off the X/Y/Z plot script, and try generating batches of four images 
 Here's the output with iteration 110 for a bunch of different photorealistic checkpoints.
 
 [Avalon TRUvision](https://civitai.com/models/13020/avalon-truvision):
+
 <img src="images/step_5_candidate_110_output_avalon.jpg" width="512" height="768" alt="Avalon results">
 
 [Deliberate v2](https://civitai.com/models/4823/deliberate):
+
 <img src="images/step_5_candidate_110_output_deliberate.jpg" width="512" height="768" alt="Deliberate results">
 
 [GalaxyTimeMachine's "ForYou-Photo"](https://civitai.com/models/25636/galaxytimemachines-foryou-photo-fantasyai):
+
 <img src="images/step_5_candidate_110_output_gtmphoto.jpg" width="512" height="768" alt="GTM Photo results">
 
 [Realistic Vision v2.0](https://civitai.com/models/4201/realistic-vision-v20):
+
 <img src="images/step_5_candidate_110_output_realistic.jpg" width="512" height="768" alt="Realistic Vision results">
 
 The results look good and consistent for each checkpoint, which convinced me that my choice of learning steps was the right one to pick. (I'm going to excuse the outlier hair color of the first image in the GalaxyTimeMachine output.)
