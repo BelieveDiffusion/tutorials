@@ -69,6 +69,8 @@ Next, set the following `txt2img` settings in A1111:
 - Sampling method: DPM++ 2M Karras
 - Sampling steps: 30
 - Restore Faces: On
+- Tiling: Off
+- Hires. fix: Off
 - Width: 512
 - Height: 512
 - CFG Scale: 7
@@ -347,7 +349,7 @@ Finally, I leave `Choose latent sampling method` at `once`.
 
 Here's how all of those settings look in A1111:
 
-![Training settings](images/step_4_train_settings.jpg)
+![Training settings](images/step_4_train_settings_1_step_200.jpg)
 
 ## Providing a custom testing prompt
 
@@ -402,4 +404,69 @@ Don't worry if some of the images are weird, or don't even contain a person; tha
 
 # 5. Choosing and validating a particular iteration of the trained embedding
 
-[FIXME]
+Okay! We're nearly there. The final step is to identify the "Goldilocks" iteration of our trained embedding - the one where it is "just right". We're looking for an iteration where prompts for `fr3nchl4dysd15` generate an image that looks like our character (so it's "not too cold"), without showing generation artifacts where the character looks over-stylized or distorted (so it's "not too hot").
+
+To put it another way: training a Textual Inversion embedding is a bit like baking cookies. If you don't bake them for long enough, then they don't look like cookies - they're still just raw dough. But if you bake them for too long, they look burned and frazzled, and they're not going to be good to eat. What you're looking for is the training iteration of your embedding that is the perfect cookie - baked, but not over-baked.
+
+## Finding out when the embedding turned
+
+The best way to find out when your embedding turned into an embedding of `fr3nchl4dysd15` is to generate a bunch of sample images for the same input seeds with a range of embeddings from the training.
+
+If you navigate to A1111's `textual_inversion` folder on disk, and look inside a folder for today's date, you should find a folder named `fr3nchl4dysd15`. I recommend copying this somewhere else on your computer, and naming it so that you can remember which iteration of your training efforts it represents.
+
+Then, copy all of the embeddings (yes, _all_ of them) from that folder into A1111's root-level `embeddings` folder. (This is the folder where A1111 looks for embeddings to use in prompts.) Once they are copied, head over to the `txt2img` tab, and click the "Show/hide extra networks" icon underneath the orange `Generate` button. This will show a bunch of cards for all of the embeddings that A1111 currently knows about. Click the `Refresh` button (to the right of the `Search…` field) to reload the `embeddings` folder, which will inform A1111 about all of the new embeddings you just copied. (If you don't perform this "refresh" step, A1111 won't use your embeddings in its prompts.)
+
+Make sure that the list of cards updates to show all of your embeddings, then click the "Show/hide extra networks" icon to hide them all again.
+
+### Generating a comparison grid
+
+In the `txt2img` tab, set the following generation settings:
+
+- Sampling method: DPM++ 2M Karras
+- Sampling steps: 30
+- Restore Faces: Off
+- Tiling: Off
+- Hires. fix: Off
+- Width: 512
+- Height: 512
+- Batch count: 3
+- Batch size: 3
+- CFG Scale: 7
+- Seed: 12345678
+- Grid margins (px): 8
+
+(The exact value of the seed doesn't matter; the key thing is that it is constant for all of the generations.)
+
+Set the `Prompt` field to:
+
+```
+a medium closeup color portrait photo of fr3nchl4dysd15-20 at the beach
+```
+
+Set the `Negative prompt` field to:
+
+```
+young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo
+```
+
+(…or your own preferred negative prompt.)
+
+We'll start by generating a coarse comparison between every 20 steps of the training, so we can see roughly where the embedding "turned" into our character.
+
+Note that the `Prompt` field specifies a particular generation of the embedding's training - `fr3nchl4dysd15-20`. We know we have a file with the name `fr3nchl4dysd15-20.pt` in the `embeddings` folder, and so that iteration of the embedding training will be used by default with this prompt.
+
+Next, from the `Script` drop-down menu, select `X/Y/Z plot`. Set `X type` to `Prompt S/R`. Set `Y type` and `Z type` to `Nothing`.
+
+Set `X values` to the following (assuming you generated 200 steps when training):
+
+```
+fr3nchl4dysd15-20, fr3nchl4dysd15-40, fr3nchl4dysd15-60, fr3nchl4dysd15-80, fr3nchl4dysd15-100, fr3nchl4dysd15-120, fr3nchl4dysd15-140, fr3nchl4dysd15-160, fr3nchl4dysd15-180, fr3nchl4dysd15-200
+```
+
+This tells A1111 to generate a set of 9 images (3x3), substituting each of the embedding training iterations (20, 40, 60, and so on) into the generation process.
+
+I recommend starting by running this generation against the base Stable Diffusion 1.5 checkpoint, to see when the baseline model shows an understanding of what your character looks like. I also try running it against the model I used to create the original input images (in my case, Deliberate v2).
+
+With the above settings, the output of the generation (which took several minutes) looked like this for me:
+
+<img src="images/step_5_20_step_comparison_sd15_beach_small.jpg" width="3858" height="444" alt="20-step comparison against SD1.5">
