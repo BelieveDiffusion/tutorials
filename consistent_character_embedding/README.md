@@ -132,7 +132,7 @@ Here's a reduced version of the entire output of this initial step when I ran it
 
 # 2. Filtering input images
 
-You now have 400 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 400 images down to ~150 _definitely_ good images to train with. Here's how I do that.
+You now have 400 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 400 images down to 25 or so _definitely_ good images to train with. Here's how I do that.
 
 ## Remove any images that are obviously off-prompt
 
@@ -171,9 +171,9 @@ For reference, I cut another 119 images in this step. This was partly because I 
 
 ## Fine-tune to just the best images
 
-This is really just a more selective take on the second and third steps above, to narrow in to the best of the best images in the input set. I culled another 20 images at this step to get me to my final 150.
+This is really just a much more selective take on the second and third steps above, to narrow in to the best of the best images in the input set. I culled a ton of okay-but-not-really-adding-anything images at this step to get me to my final 25.
 
-Ideally, after doing all of the above, you will have 150(ish) good-quality images left that look like the character you're aiming for. If you don't, just generate another batch, and repeat the process. Even more ideally, the final set of images will contain a good representation of the five zoom levels and viewing angles too.
+Ideally, after doing all of the above, you will have 25 good-quality images left that look like the character you're aiming for. Even more ideally, the final set of images will contain a good representation of the five zoom levels and viewing angles too.
 
 # 3. Tagging input images
 
@@ -219,7 +219,7 @@ There's one problem with that, however. We may have _asked_ SD to generate `an e
 
 In many cases, the requested zoom level from a prompt in step 1 will match the image we got back. But that's not always the case - I often find that I don't get any `extreme closeup` images from step 1 above, for example.
 
-The way I approach this tidy-up process is to create five folders, named after each of the requested zooms, and to copy images into those folders based on the zoom level in their original filename. (This is why we included the generation prompt in the PNG file name above.) I then look through the images in each folder, and move any that don't fit the description of that zoom level to a more appropriate folder.
+The way I approach this tidy-up process is to create (up to) five folders, named after each of the requested zooms, and to copy images into those folders based on the zoom level in their original filename. (This is why we included the generation prompt in the PNG file name above.) I then look through the images in each folder, and move any that don't fit the description of that zoom level to a more appropriate folder.
 
 There's no exact science to what these zoom definitions mean. Here's how I apply the zooms, working from widest angle to closest:
 
@@ -229,7 +229,7 @@ There's no exact science to what these zoom definitions mean. Here's how I apply
 4. Can you see the neck area? If so, it's probably `"a medium closeup"` photo.
 5. If none of the above, it's probably `"an extreme closeup"` photo.
 
-Don't worry too much if you don't have any `extreme closeup` photos, or if your `full body` folder only has a few images in it once you're done. The important thing is that the zoom definitions you do have are correct.
+Don't worry too much if you don't have any `extreme closeup` photos, or if your `full body` folder has few or no images in it once you're done. The important thing is that the zoom definitions you do have are correct.
 
 ## Renaming the tidied images
 
@@ -249,9 +249,9 @@ a medium closeup photo of fr3nchl4dysd15 naked, neutral gray background (2).png
 …
 ```
 
-…and so on. Finally, copy all 150 of the renamed images into a single folder that A1111 can access.
+…and so on. Finally, copy all 25 of the renamed images into a single folder that A1111 can access.
 
-The names of these renamed images will be used in place of the `[filenames]` text in our training prompt template during training, giving training prompts like this:
+The names of these renamed images will be used in our training prompt during training, giving training prompts like this:
 
 ```
 fr3nchl4dysd15, a closeup photo of fr3nchl4dysd15 naked, neutral gray background (1)
@@ -287,7 +287,7 @@ Here's how all of those settings look in A1111:
 
 Next, head over to the `Train` sub-tab. I'll cover all of the training settings below, but if you just want a summary, here's how my settings look in A1111:
 
-![Training settings](images/step_4_train_settings_5_step_200.jpg)
+![Training settings](images/step_4_train_settings_5_step_150.jpg)
 
 ### Basic settings
 
@@ -295,7 +295,9 @@ Select the embedding you just created (`fr3nchl4dysd15`) in the `Embedding` drop
 
 You can ignore the `Hypernetwork` dropdown and the `Hypernetwork Learning rate` field - those are only used when training a Hypernetwork, which we're not doing here.
 
-`Embedded Learning rate` is a finicky beast. Many tutorials advise setting this to a value that changes over time, but I've had more success keeping it constant. For 150 images, I set the learning rate to `0.002`.
+For 25 input images, I set `Embedded Learning rate` to `0.002:25, 0.001`. This tells SD to train (for training steps 1 through 25) with a reasonably quick learning rate of `0.002`. It then switches to a slower learning rate of `0.001` for all remaining training steps.
+
+The goal here is to trigger SD to get the high-level essence of your character pretty quickly, then give it more time to pick up the nuances and details that make your character unique. It's kind of like carving a statue of a person out of a block of marble - you start with a big chisel to get the rough shape of the person, then use smaller and smaller chisels to add the detail.
 
 I leave `Gradient Clipping` as `disabled`, and leave the value as `1`.
 
@@ -331,9 +333,9 @@ Leave the `Width` and `Height` at their default values of `512`. There's no need
 
 ### Steps
 
-With all of the settings above, and an image dataset of 150 images, I find that the model tends to become well-trained somewhere between 50-150 training steps. To that end, I normally set `Max steps` to `200`.
+With all of the settings above, and an image dataset of 25 images, I find that the model tends to become well-trained somewhere between 100-120 training steps. To that end, I normally set `Max steps` to `150`.
 
-For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to either `10`, `5`, or `1`. Setting a value of `10` will train more quickly, because SD isn't pausing to generate a "how am I doing?" image and embedding every single step. However, it means that you also only have "marker" embeddings to select from every ten steps of the generation process. Setting a value of `5` saves an image and embedding twice as often, giving more scope for picking just the right "[Goldilocks](https://en.wikipedia.org/wiki/Goldilocks_and_the_Three_Bears)" iteration. Setting the values to `1` gives you an embedding at every step, at the cost of more generation time. You're basically trading off flexibility of choosing an iteration against generation time. If in doubt, use `5` for both of these numbers.
+For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to either `5` or `1`. Setting a value of `5` will train more quickly, because SD isn't pausing to generate a "how am I doing?" image and embedding every single step. However, it means that you also only have "marker" embeddings to select from every five steps of the generation process. Setting a value of `1` saves an image and embedding every single step, giving more scope for picking just the right "Goldilocks" iteration, at the cost of more generation time. You're basically trading off flexibility of choosing an iteration against generation time. If in doubt, use `5` for both of these numbers (I normally do).
 
 ### Training options
 
@@ -400,9 +402,9 @@ Don't worry if some of the images are weird, or don't even contain a person; tha
 
 # 5. Choosing and validating a particular iteration of the trained embedding
 
-Okay! We're nearly there. The final step is to identify the "Goldilocks" iteration of our trained embedding - the one where it is "just right". We're looking for an iteration where prompts for `fr3nchl4dysd15` generate an image that looks like our character (so it's "not too cold"), without showing generation artifacts where the character looks over-stylized or distorted (so it's "not too hot").
+Okay! We're nearly there. The final step is to identify the "Goldilocks" iteration of our trained embedding - the one where it is "just right". We're looking for an iteration where prompts for `fr3nchl4dysd15` generate an image that looks just like our character (so it's "not too cold"), without showing generation artifacts where the character looks over-stylized or distorted (so it's "not too hot").
 
-To put it another way: training a Textual Inversion embedding is a bit like baking cookies. If you don't bake them for long enough, then they don't look like cookies - they're still raw dough. But if you bake them for too long, they become burned and frazzled, and they're not going to be good to eat. What you're looking for is the training iteration of your embedding that is the perfect cookie - baked, but not over-baked.
+To put it another way: training a Textual Inversion embedding is a bit like baking cookies. If you don't bake them for long enough, then they don't turn into cookies - they're still raw dough. But if you bake them for too long, they become burned and frazzled, and they don't look (or taste) good. What you're looking for is the training iteration of your embedding that is the perfect cookie - baked, but not over-baked.
 
 ## Validation setup
 
@@ -425,15 +427,15 @@ In the `txt2img` tab, set the following generation settings:
 - Hires. fix: Off
 - Width: 512
 - Height: 512
-- Batch count: 3
-- Batch size: 3
+- Batch count: 1
+- Batch size: 4
 - CFG Scale: 8 (note: higher than the default)
 - Seed: 12345678 (note: different to the default)
 - Grid margins (px): 16 (note: different to the default)
 
 (The exact value of the seed doesn't matter; the key thing is that it is constant for all of the generations.)
 
-I've found this to be an unexpectedly useful prompt for detecting the right `Steps` value to use. Set the `Prompt` field to:
+The prompt I usually use for detecting the right `Steps` value to use is:
 
 ```
 a medium closeup color portrait photo of fr3nchl4dysd15-20 wearing a bra on a greek island
@@ -449,17 +451,17 @@ young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, b
 
 We'll start by generating a coarse comparison between every 20 steps of the training, so we can see roughly where the embedding "turned" into our character.
 
-Note that the `Prompt` field specifies a particular generation of the embedding's training - `fr3nchl4dysd15-20`. We know we have a 20-steps-of-training embedding file with the name `fr3nchl4dysd15-20.pt` in the `embeddings` folder, and so that iteration of the embedding will be used by default with this prompt.
+Note that the `Prompt` text above specifies a particular generation of the embedding's training - `fr3nchl4dysd15-20`. We know we have a 20-steps-of-training embedding file with the name `fr3nchl4dysd15-20.pt` in the `embeddings` folder, and so that iteration of the embedding will be used by default with this prompt.
 
 Next, from the `Script` drop-down menu, select `X/Y/Z plot`. Set `X type` to `Prompt S/R`. Set `Y type` and `Z type` to `Nothing`.
 
-Set `X values` to the following (assuming you generated 200 steps when training):
+Set `X values` to the following (assuming you generated 150 steps when training):
 
 ```
-fr3nchl4dysd15-20, fr3nchl4dysd15-40, fr3nchl4dysd15-60, fr3nchl4dysd15-80, fr3nchl4dysd15-100, fr3nchl4dysd15-120, fr3nchl4dysd15-140, fr3nchl4dysd15-160, fr3nchl4dysd15-180, fr3nchl4dysd15-200
+fr3nchl4dysd15-20, fr3nchl4dysd15-40, fr3nchl4dysd15-60, fr3nchl4dysd15-80, fr3nchl4dysd15-100, fr3nchl4dysd15-120, fr3nchl4dysd15-140
 ```
 
-This tells A1111 to generate a set of 9 images (3x3) for each embedding training iteration that was a multiple of 20 (so 20, 40, 60, and so on).
+This tells A1111 to generate a set of 4 images for each embedding training iteration that was a multiple of 20 (so 20, 40, 60, and so on).
 
 Here's how those validation settings look for me:
 
@@ -467,38 +469,32 @@ Here's how those validation settings look for me:
 
 I recommend running this against the model you used to create the original input images (in my case, Deliberate v2), and also against the Stable Diffusion 1.5 base model. I've included examples of both below.
 
-The generation process may take several minutes, and will generate a VERY big image. I've cropped it down to show some select iterations below.
+The generation process may take several minutes, and will generate a big image. I've cropped it down to show some select iterations below.
 
 ## Finding out when the embedding became "good"
 
 If we look at the output of this prompt after 20 training steps, we can see that it doesn't really look much like our character yet (SD 1.5 on the left, Deliberate v2 on the right):
 
-<img src="images/step_5_coarse_sd15_bra_greek_island_step_20.jpg" width="384" height="445" alt="Validation output after 20 steps of training - SD 1.5">
-<img src="images/step_5_coarse_deliberate_bra_greek_island_step_20.jpg" width="384" height="445" alt="Validation output after 20 steps of training - Deliberate v2">
+<img src="images/step_5_coarse_sd15_bra_greek_island_step_20.jpg" width="512" height="592" alt="Validation output after 20 steps of training - SD 1.5">
+<img src="images/step_5_coarse_deliberate_bra_greek_island_step_20.jpg" width="512" height="592" alt="Validation output after 20 steps of training - Deliberate v2">
 
-However, if we look a little further ahead, we can see that things really start to turn into our character somewhere between step 100 and step 140. Here are the outputs of those steps from SD 1.5:
+However, if we look a little further ahead, we can see that things really start to turn into our character somewhere between step 80 and step 120. Here are the outputs of those steps from SD 1.5:
 
-<img src="images/step_5_coarse_sd15_bra_greek_island_steps_100_to_140.jpg" width="1160" height="445" alt="Validation output between 100 and 140 steps of training - SD 1.5">
-
-…and from Deliberate v2:
-
-<img src="images/step_5_coarse_deliberate_bra_greek_island_steps_100_to_140.jpg" width="1160" height="445" alt="Validation output between 100 and 140 steps of training - Deliberate v2">
-
-To narrow things down further, we'll generate a second comparison image, this time using the embeddings we generated every five iterations between 100 and 140 steps.
-
-Change the `X values` box to the following, and generate another grid for the two checkpoints (replacing `fr3nchl4dysd15-20` with `fr3nchl4dysd15-100` in the prompt as the new starting value):
-
-```
-fr3nchl4dysd15-100, fr3nchl4dysd15-105, fr3nchl4dysd15-110, fr3nchl4dysd15-115, fr3nchl4dysd15-120, fr3nchl4dysd15-125, fr3nchl4dysd15-130, fr3nchl4dysd15-135, fr3nchl4dysd15-140
-```
-
-You're looking for the first iteration where all nine of the images are definitely recognizably your character in both models. For me, this turned out to be step 115. Here are the outputs from SD 1.5:
-
-<img src="images/step_5_fine_sd15_bra_greek_island_steps_110_to_120.jpg" width="1160" height="445" alt="Validation output between 110 and 120 steps of training - SD 1.5">
+<img src="images/step_5_coarse_sd15_bra_greek_island_steps_80_to_120.jpg" width="1552" height="592" alt="Validation output between 80 and 120 steps of training - SD 1.5">
 
 …and from Deliberate v2:
 
-<img src="images/step_5_fine_deliberate_bra_greek_island_steps_110_to_120.jpg" width="1160" height="445" alt="Validation output between 110 and 120 steps of training - Deliberate v2">
+<img src="images/step_5_coarse_deliberate_bra_greek_island_steps_80_to_120.jpg" width="1552" height="592" alt="Validation output between 80 and 120 steps of training - Deliberate v2">
+
+To narrow things down further, we'll generate a second comparison image, this time using the embeddings we generated every five iterations between 80 and 120 steps.
+
+Change the `X values` box to the following, and generate another grid for the two checkpoints (replacing `fr3nchl4dysd15-20` with `fr3nchl4dysd15-80` in the prompt as the new starting value):
+
+```
+fr3nchl4dysd15-80, fr3nchl4dysd15-85, fr3nchl4dysd15-90, fr3nchl4dysd15-95, fr3nchl4dysd15-100, fr3nchl4dysd15-105, fr3nchl4dysd15-110, fr3nchl4dysd15-115, fr3nchl4dysd15-120
+```
+
+You're looking for the first iteration where all four of the images are definitely recognizably your character. For me, this turned out to be step 115.
 
 ## Validating the candidate embedding
 
