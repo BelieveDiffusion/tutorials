@@ -199,13 +199,15 @@ One of the goals of tagging is to tell the training process about all of the thi
 
 We likewise don't want the character to always be naked, so we'll keep "naked" in our training prompt too. (We don't need to boost these two terms in the training prompt - we're just stating facts about the generated images).
 
+> Note: You don't *have* to tell the training that your input images were naked… but if you don't, then images you generate with the embedding are much more likely to be naked by default. That's not a goal of my own training, so I choose to leave `naked` in the training tags.
+
 We will, however, remove the original viewing angles from the generation prompt, because they're not something we really need SD to learn - they were more to ensure we got a varied set of input images from step 1 above.
 
 We will likewise remove `neutral face expression` from the training prompt, because we don't need to train SD on this fact - the absence of a facial expression is implicit from its omission from the training prompt. (We only specified it in the generation prompt in step 1 to ensure we got neutral expressions to train on.)
 
 The one other thing I do keep around in the training prompt is the zoom levels. I don't want SD to learn that `fr3nchl4dysd15` is always in `a closeup photo` (or whatever zoom we ended up with most of). We don't want the embedding to learn a particular zoom level, so we keep it in the training prompt.
 
-There's one problem with that, however. We may have _asked_ SD to generate `an extreme closeup photo` for some image in our initial set of 400 images, but that's no guarantee that SD actually gave us what we asked for. So, we need to go through each filtered image, and check that the zoom level actually matches the image.
+There is one problem with that - we may have _asked_ SD to generate `an extreme closeup photo` for some image in our initial set of 400 images, but that's no guarantee that SD actually gave us what we asked for. So, we need to go through each filtered image, and check that the zoom level actually matches the image.
 
 ## Tidying up the zooms
 
