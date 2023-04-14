@@ -333,56 +333,15 @@ For `Save an image to log directory every N steps, 0 to disable` and `Save a cop
 
 I leave `Use PNG alpha channel as loss weight` unchecked.
 
-I leave `Save images with embedding in PNG chunks` checked.
+I uncheck `Save images with embedding in PNG chunks` for my test runs. Enabling this option saves a second copy of your embedding as a combined file embedded inside a copy of each test image. I haven't found this to be particularly useful, so I uncheck the option.
 
-I usually check the `Read parameters (prompt, etc...) from txt2img tab when making previews` checkbox, so that I can provide a custom "test" prompt to see how the embedding is progressing. More on that below.
+I also leave the `Read parameters (prompt, etc...) from txt2img tab when making previews` box unchecked.
+
+> Note: You can use this checkbox to provide a custom "test" prompt to see how the embedding is progressing. Previously I recommended doing so, but after more training runs, I'm finding that the custom prompt is less useful than I first thought. I now always leave this unchecked.
 
 I leave `Shuffle tags by ',' when creating prompts` unchecked, and leave `Drop out tags when creating prompts` at `0`. I've heard that this can provide more flexibility to the range of input prompts that can be used with an embedding, but I prefer to keep the prompts in the exact order and format I authored them, so I don't enable these options.
 
 Finally, I leave `Choose latent sampling method` at `once`.
-
-## Providing a custom testing prompt
-
-Before you click the `Train Embedding` button, there's one more thing to set up. Remember above how we checked the `Read parameters (prompt, etc...) from txt2img tab when making previews` box? Well, that enables us to provide a custom `txt2img` prompt for use when making a "how is the training going?" image every N steps. This gives us more control over the "test" images that are created during the training process.
-
-### Defining the prompt
-
-Head back over to the `txt2img` tab, and set the `Prompt` text field to:
-
-```
-an extreme closeup color photo of fr3nchl4dysd15 in a forest
-```
-
-This prompt serves two purposes:
-
-1. It enables us to spot when the embedding starts to generate people for a prompt of `fr3nchl4dysd15` who look like our character. (Requesting `an extreme closeup` makes it much more likely that the test images generated during training will give us a good look at our character's face.)
-
-2. It enables us to spot if and when the embedding starts to over-train. If you stop seeing a forest (or something like a forest) in the background, and instead start to see gray backgrounds in multiple images in a row, then you've probably reached the point where the embedding is already overtrained (which means you can interrupt any further training and switch over to selecting an iteration to use).
-
-### Other test prompt settings
-
-With the prompt in place, update any other settings as follows:
-
-- Negative prompt: empty
-- Sampling method: Euler A
-- Sampling steps: 20
-- Restore Faces: Off
-- Tiling: Off
-- Hires. fix: Off
-- Width: 512
-- Height: 512
-- Batch count: 1
-- Batch size: 1
-- CFG Scale: 7
-- Seed: -1
-- ControlNet: off
-- Script: None
-
-These settings are optimized for speed (`Euler A`, `20` sampling steps) rather than quality, and for showing the "essence" of what SD is learning as `fr3nchl4dysd15` (a very simple prompt, with no negative). They are only going to be used for generating images that let us keep an eye on how the training is going, so we don't need them to be perfect.
-
-Here's how all of those settings look in A1111:
-
-![Training settings](images/step_4_txt2img_settings.jpg)
 
 ## Running the training
 
@@ -390,7 +349,7 @@ With all of that in place, head back over to the `Train` tab / the `Train` subta
 
 The training process will first prepare your dataset (the images) for training. It will then start the training, generating an image every N steps.
 
-Don't worry if some of the images are weird, or don't even contain a person; that's normal, in my experience. However, at some point you should start to see a majority of images that increasingly look like your input character.
+Don't worry if a few of the early images are weird, or don't even contain a person; that's normal, in my experience. However, at some point you should start to see a majority of images that increasingly look like your input character.
 
 # 5. Choosing and validating a particular iteration of the trained embedding
 
