@@ -122,11 +122,14 @@ Because we have _two_ `Prompt S/R` options set for the script, with five variati
 
 Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` and `Batch Size` both to 4. This will generate 16 images for every permutation of the above, in batches of four for speed. (If your GPU can handle it, you can use a `Batch Count` of 2 and a `Batch Size` of 8 instead.)
 
-Here's how that looks for me with today's A1111 interface:
+With all of the above, we have asked A1111 to generate 400 images (16 x 5 x 5). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
+
+> Note: You don't have to generate 400 images at this stage if you don't want too! If you have a slower GPU, or just can't be bothered to sort through that many images, then reduce it to 200, or 100, or whatever you prefer (by reducing the batch size and / or count). Personally, I like to generate a larger number of images and sort through them, so that I can choose just the very best and closest-matching images from the output. But you do you.
+
+Here's how all of the generation settings look for me with today's A1111 interface:
 
 ![Input generation settings](images/step_1_input_generation_settings.jpg)
 
-With all of the above, we have asked A1111 to generate 400 images (16 x 5 x 5). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
 
 # 2. Filtering input images
 
