@@ -380,9 +380,9 @@ In the `txt2img` tab, set the following generation settings:
 - Height: 512
 - Batch count: 1
 - Batch size: 4
-- CFG Scale: 8 (note: higher than the default)
-- Seed: 12345678 (note: different to the default)
-- Grid margins (px): 16 (note: different to the default)
+- CFG Scale: 7
+- Seed: 12345678 _(note: different to the default)_
+- Grid margins (px): 16 _(note: different to the default)_
 
 (The exact value of the seed doesn't matter; the key thing is that it is constant for all of the generations.)
 
