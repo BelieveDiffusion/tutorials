@@ -255,7 +255,7 @@ Don't worry about the number in brackets at the end - SD will ignore it.
 
 With the input images generated and tagged, it's time to train the embedding.
 
-The first (and easiest to forget) step is to switch A1111's `Stable Diffusion checkpoint` dropdown to the base Stable Diffusion 1.5 checkpoint. (In my case, this is named `model.ckpt`). You always want to train an embedding against the base checkpoint, so that it is as flexible as possible when applied to any other checkpoint that derives from the SD 1.5 base.
+The first (and easiest to forget) step is to switch A1111's `Stable Diffusion checkpoint` dropdown to reference one of the [base Stable Diffusion 1.5 checkpoints](https://huggingface.co/runwayml/stable-diffusion-v1-5). You always want to train an embedding against the base 1.5 checkpoint, so that it is as flexible as possible when applied to any other checkpoint that derives from the SD 1.5 base (which almost all of the popular checkpoints used with Stable Diffusion do). I use the smaller `v1-5-pruned-emaonly.ckpt` (4.27GB), but you can use the larger `v1-5-pruned.ckpt` (7.7GB) if you have it - either will work just fine for training a Textual Inversion.
 
 ## Creating a new Embedding
 
