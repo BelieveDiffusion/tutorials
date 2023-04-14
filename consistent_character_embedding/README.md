@@ -287,9 +287,9 @@ Select the embedding you just created (`fr3nchl4dysd15`) in the `Embedding` drop
 
 You can ignore the `Hypernetwork` dropdown and the `Hypernetwork Learning rate` field - those are only used when training a Hypernetwork, which we're not doing here.
 
-For 25 input images, I set `Embedded Learning rate` to `0.002:25, 0.001`. This tells SD to train (for training steps 1 through 25) with a reasonably quick learning rate of `0.002`. It then switches to a slower learning rate of `0.001` for all remaining training steps.
+For 25 input images, I set `Embedded Learning rate` to `0.002`. This tells SD to train with a fixed, balanced rate of `0.002`.
 
-The goal here is to trigger SD to get the high-level essence of your character pretty quickly, then give it more time to pick up the nuances and details that make your character unique. It's kind of like carving a statue of a person out of a block of marble - you start with a big chisel to get the rough shape of the person, then use smaller and smaller chisels to add the detail.
+> Note: Previously I recommended a varied training rate, starting with a higher value such as `0.005`, and then lowering the rate after a certain number of steps. However, I've found that even with the exact same settings and images, multiple training runs can "turn" at a different point, due to the inherent randomness of the training process. This makes it hard to know when to change from one rate to the next, because the right step at which to change the rate will vary from run to run. I've found I get perfectly good results with a fixed learning rate.
 
 I leave `Gradient Clipping` as `disabled`, and leave the value as `1`.
 
