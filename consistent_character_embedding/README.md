@@ -327,7 +327,7 @@ Leave the `Width` and `Height` at their default values of `512`. There's no need
 
 With all of the settings above, and an image dataset of 25 images, I find that the model tends to become well-trained somewhere between 100-120 training steps. To that end, I normally set `Max steps` to `150`.
 
-For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to either `5` or `1`. Setting a value of `5` will train more quickly, because SD isn't pausing to generate a "how am I doing?" image and embedding every single step. However, it means that you also only have "marker" embeddings to select from every five steps of the generation process. Setting a value of `1` saves an image and embedding every single step, giving more scope for picking just the right "Goldilocks" iteration, at the cost of more generation time. You're basically trading off flexibility of choosing an iteration against generation time. If in doubt, use `5` for both of these numbers (I normally do).
+For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to `Save an image` to `5`, and `Save a copy of embedding` to `1`. Setting `image` to `5` asks SD to generate a "how am I doing?" image every five steps, so that you can visualize if it is definitely learning. Setting `embedding` to `1` means that you have "marker" embeddings for every step of the generation process, giving more precise scope for picking just the right "Goldilocks" iteration.
 
 ### Training options
 
