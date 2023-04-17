@@ -10,13 +10,13 @@ You can see [all of the "LastName" characters I've trained with this method on C
 
 ## Goals
 
-If all goes to plan, by the end of this tutorial you will have created a Stable Diffusion [Textual Inversion embedding](https://arxiv.org/abs/2208.01618) that can reliably recreate a consistent character across multiple poses, SD checkpoints, hair styles, body types, and prompts.
+In this tutorial, you will create a Stable Diffusion [Textual Inversion embedding](https://arxiv.org/abs/2208.01618) that reliably recreates a consistent character across multiple poses, SD checkpoints, hair styles, body types, and prompts.
 
-> Note: My primary aim with this tutorial is to create a character with a consistent _facial_ appearance whenever the character is used, and not a guaranteed consistent body shape. You _can_ train a body shape if you show SD more full-body images of a character, but I've found that body shape is something you can just as easily make consistent through prompting when generating images. Creating a consistent face, however, is something that really benefits from a Textual Inversion embedding. Thanks go to `GalaxyTimeMachine` from the Unstable Diffusion Discord for convincing me of the value of focusing in on facial likeness as the primary goal of an embedding.
+> Note: My primary aim with this tutorial is to create a character with a consistent _facial_ appearance, not a guaranteed consistent body shape. You _can_ train a body shape if you show SD more full-body images of a character, but I've found that body shape is something you can just as easily make consistent through prompting when generating images. Creating a consistent face, however, is something that benefits from a Textual Inversion embedding. Thanks go to `GalaxyTimeMachine` from the Unstable Diffusion Discord for convincing me of the value of focusing in on facial likeness as the primary goal of an embedding.
 
 ## Process
 
-The creation process is split into four steps:
+The creation process has four steps:
 
 1. Generating input images
 2. Filtering input images
@@ -81,7 +81,7 @@ These settings should give good-quality outputs, at the expense of slightly long
 
 I like to make input images that are as "neutral" as possible, so that SD learns the essence of them without also learning things that we might want to change for variety in image generation prompts. So, I try to avoid generating images that contain things like glasses, earrings, necklaces, and so on, that might bias later generation to include those same items.
 
-I also choose to generate the training input images without clothes, because I want to train the base concept of a hypothetical human that I can then add any clothing or accessories to via custom prompts later on. SD has seen a lot of humans wearing a lot of different clothes, but it has never seen your custom character naked, so that's what we'll give it as input, for the most flexibility. (In practice, we're mostly going to be generating images of our character's face and shoulders, but I still find it easier if these images are defined to be naked, so that the shoulders are bare and we don't need to describe any clothing in the images.)
+I also choose to generate the training input images without clothes, because I want to train the base concept of a hypothetical human that I can then add any clothing or accessories to via custom prompts later on. SD has seen a lot of humans wearing a lot of different clothes, but it has never seen your custom character naked, so that's what we'll give it as input, for the most flexibility. (In practice, we're mostly going to be generating images of our character's face and shoulders, but I still find it easier if these images are naked, so that the shoulders are bare and we don't need to describe any clothing in the images.)
 
 I also use a neutral gray background in all my input images, to keep the training focused on the character on the foreground. (We'll tell SD that we used a neutral gray background later on, so that it doesn't learn "neutral gray background" as part of the character's attributes.)
 
@@ -123,7 +123,7 @@ Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` and `B
 
 With all of the above, we have asked A1111 to generate 144 images (16 x 3 x 3). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
 
-> Note: You don't have to generate 144 images at this stage if you don't want to! If you have a slower GPU, or just can't be bothered to sort through that many images, then reduce the batch size and / or batch count for a lower total output. Personally, I like to generate a larger number of images, so that I can choose just the very best and closest-matching images from the output.
+> Note: You don't have to generate 144 images at this stage if you don't want to! If you have a slower GPU, or don't want to sort through that many images, then reduce the batch size and / or batch count for a lower total output. Personally, I like to generate a larger number of images, so that I can choose just the very best and closest-matching images from the output.
 
 Here's how all of the generation settings look for me with today's A1111 interface:
 
@@ -228,7 +228,7 @@ If your GPU can handle it, the ideal (with 8 training images) is to set `Batch s
 
 ### Input and output directories
 
-`Dataset directory` should be set to the path on disk (accessible to A1111) where the input images and tagging text files are stored. This can be whatever you like.
+`Dataset directory` should be the path on disk (accessible to A1111) where the input images are stored. This can be whatever you like.
 
 I usually leave `Log directory` at the default value.
 
@@ -242,7 +242,7 @@ For this process, I use a custom prompt template, which goes in the `textual_inv
 a photo of [name] naked, neutral gray background
 ```
 
-This file gets translated by SD into a training prompt for each input image. `[name]` is translated into the name of the embedding (`fr3nchl4dysd15`). So, for each of our images, the combined training prompt from this text file will be:
+This file gets translated by SD into a training prompt for each input image. `[name]` is replaced with the name of the embedding (`fr3nchl4dysd15`). So, for each of our images, the combined training prompt from this text file will be:
 
 ```
 a photo of fr3nchl4dysd15 naked, neutral gray background
