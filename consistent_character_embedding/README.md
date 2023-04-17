@@ -12,6 +12,8 @@ You can see [all of the "LastName" characters I've trained with this method on C
 
 If all goes to plan, by the end of this tutorial you will have created a Stable Diffusion [Textual Inversion embedding](https://arxiv.org/abs/2208.01618) that can reliably recreate a consistent character across multiple poses, SD checkpoints, hair styles, body types, and prompts.
 
+> Note: My primary aim with this tutorial is to create a character with a consistent _facial_ appearance whenever the character is used, and not a guaranteed consistent body shape. You _can_ train a body shape if you show SD more full-body images of a character, but I've found that body shape is something you can just as easily make consistent through prompting when generating images. Creating a consistent face, however, is something that really benefits from creating a Textual Inversion. Thanks go to `GalaxyTimeMachine` from the Unstable Diffusion Discord for convincing me of the value of focusing in on facial likenesses.
+
 ## Process
 
 The creation process is split into four steps:
@@ -23,25 +25,25 @@ The creation process is split into four steps:
 
 # 1. Generating input images
 
-Training an AI is a classic example of "[garbage in, garbage out](https://en.wikipedia.org/wiki/Garbage_in,_garbage_out)". The better the input images you provide, the better the output you'll get. To that end, I use SD to generate the input images for the character I'm going to train. That way, I can generate hundreds of permutations based on a description of that character, and pick just the best images to use for the later training.
+Training an AI is a classic example of "[garbage in, garbage out](https://en.wikipedia.org/wiki/Garbage_in,_garbage_out)". The better the input images you provide, the better the output you'll get. To that end, I use SD to generate the input images for the character I'm going to train. That way, I can generate lots of permutations based on a description of that character, and pick just the best images to use for the later training.
 
 I generate these images via [Automatic1111's Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) (I'll call it "A1111" below). I won't cover how to set up A1111 here; there are lots of tutorials available for getting A1111 up and running. But here's how I customize A1111 for input image generation.
 
 ## Choosing a checkpoint for generating your input images
 
-You can use any SD checkpoint you like to generate your input images, although it's essential that the model you choose has seen (and can generate) representative examples like your character. I've been creating photorealistic made-up characters, and I've found [Deliberate](https://civitai.com/models/4823/deliberate) (v2) to be a good, flexible checkpoint for that, but there are plenty of other models available on sites like [CivitAI](https://civitai.com/).
+You can use any SD checkpoint you like to generate your input images, although it's essential that the model you choose has seen (and can generate) representative examples like your character. I've been creating photorealistic made-up characters, and I've found [Deliberate](https://civitai.com/models/4823/deliberate) (v2) to be a good, flexible checkpoint for that, but there are plenty of other checkpoints available on sites like [CivitAI](https://civitai.com/).
 
 ## Setting up an input prompt
 
 With your preferred generation checkpoint selected in A1111's web interface, open the `txt2img` tab, and enter a positive prompt with the following format:
 
 ```
-an extreme closeup front shot photo of %your character's look% (naked:1.3), %your character's body shape%, %your character's hairstyle%, (neutral gray background:1.3), neutral face expression
+an extreme closeup front shot photo of %your character's look% (naked:1.3), %your character's hairstyle%, (neutral gray background:1.3), neutral face expression
 ```
 
-For this input prompt, I've boosted the strength of the `naked` prompt token, to say "we _really_ want the images to be of the character naked, please." I've found this reduces the number of non-naked images we have to throw away later on. Similarly, I've boosted "neutral gray background", so that (hopefully) all of the images come out with nothing distracting in the background.
+For this input prompt, I've boosted the strength of the `naked` prompt token, to say "we _really_ want the images to be of the character naked, please." I've found this reduces the number of non-naked upper-body images we have to throw away later on. Similarly, I've boosted "neutral gray background", so that (hopefully) all of the images come out with nothing distracting in the background.
 
-Replace `%your character's look%`, `%your character's body shape%`, and `%your character's hairstyle%` in the prompt with descriptions that will reliably generate a face, body, and hairstyle that match your target character.
+Replace `%your character's look%` and `%your character's hairstyle%` in the prompt with descriptions that will reliably generate a face and hairstyle that match your target character.
 
 Be descriptive, but try to stay within the `75/75` limit of A1111's input prompt box. The fewer essential details you provide, the more chance there is that those details will be present in every image you generate. (And the facial details are the ones that really matter.)
 
@@ -50,7 +52,7 @@ One tip I've learned from experience: adding a country of origin can really help
 Here's an example of just-enough-but-not-too-much detail:
 
 ```
-an extreme closeup front shot photo of a beautiful 25yo French woman with defined cheekbones, a straight nose, full lips, hazel eyes, chin dimple, square jaw, plucked eyebrows, (naked:1.3), small breasts, toned body, chin length straight black hair in a bob cut with bangs, (neutral gray background:1.3), neutral face expression
+an extreme closeup front shot photo of a beautiful 25yo French woman with defined cheekbones, a straight nose, full lips, hazel eyes, chin dimple, square jaw, plucked eyebrows, (naked:1.3), chin length straight black hair in a bob cut with bangs, (neutral gray background:1.3), neutral face expression
 ```
 
 For the negative prompt, try something like this:
@@ -79,13 +81,13 @@ These settings should give good-quality outputs, at the expense of slightly long
 
 I like to make input images that are as "neutral" as possible, so that SD learns the essence of them without also learning things that we might want to change for variety in image generation prompts. So, I try to avoid generating images that contain things like glasses, earrings, necklaces, and so on, that might bias later generation to include those same items.
 
-I also choose to generate the training input images without clothes, because I want to train the base concept of a hypothetical human that I can then add any clothing or accessories to via custom prompts later on. SD has seen a lot of humans wearing a lot of different clothes, but it has never seen your custom character naked, so that's what we'll give it as input, for the most flexibility.
+I also choose to generate the training input images without clothes, because I want to train the base concept of a hypothetical human that I can then add any clothing or accessories to via custom prompts later on. SD has seen a lot of humans wearing a lot of different clothes, but it has never seen your custom character naked, so that's what we'll give it as input, for the most flexibility. (In practice, we're primarily going to be using generated images of our character's face and shoulders. However, I still find it easier if these images are defined to be naked.)
 
 I also use a neutral gray background in all my input images, to keep the training focused on the character on the foreground. (We'll tell SD that we used a neutral gray background later on, so that it doesn't learn "neutral gray background" as part of the character's attributes.)
 
 ## Testing the input prompt
 
-With the settings above in place, generate a small set of test images to see how well your prompt performs. I usually set `Batch count` to 2 and `Batch size` to 4 (with a `Seed` of `-1`), then hit Generate, to create eight test images. This helps me to see if the prompt creates a consistent (enough) output across multiple seeds.
+With the settings above in place, generate a small set of test images to see how well your prompt performs. I usually set `Batch count` to 2 and `Batch size` to 4 (with a `Seed` of `-1`), then hit Generate, to create eight test images. This helps me to see if the prompt creates a consistent (enough) facial output across multiple seeds.
 
 Note that even with a detailed description like the one above, your character might not (yet) look entirely consistent between all of the images. That's okay - we will improve that by filtering the images later, and also by averaging the character's visual characteristics through training. But you still want to be seeing a recognizable-enough consistency at this stage. If you don't, tweak your prompt, and try again.
 
@@ -93,55 +95,56 @@ Note that even with a detailed description like the one above, your character mi
 
 The next thing we want to do is to generate a whole bunch of variations of our character, with different viewing angles and camera zooms. I mentioned above that SD follows the principle of "garbage in, garbage out"; the same also holds for "variation in, variation out". In other words, the more of a variety of angles and framings we can show SD of our character, the better SD will become at generating varied angles and framings when we use our character in prompts later on.
 
+> Note: In a previous version of this tutorial, I suggested also showing permutations with even wider viewing angles, showing the character's full body. In practice, I've found that SD isn't great at generating accurate faces with wider viewing angles, and so nearly all of these images ended up getting thrown away. This is part of the reason why I've re-focused this tutorial on generating consistent facial characteristics.
+
 To add this variety, open the `Script` menu, and select `X/Y/Z Plot`. Set `X type` and `Y type` to `Prompt S/R` ("Prompt search and replace"), and keep `Z type` as `Nothing`.
 
-In the `X values` text box, paste the following five zoom levels:
+In the `X values` text box, paste the following three zoom levels:
 
 ```
-an extreme closeup, a medium closeup, a closeup, a medium shot, a full body
+an extreme closeup, a medium closeup, a closeup
 ```
 
-This tells the A1111 web UI that we want to generate images with five different permutations of our prompt - one that uses the original `an extreme closeup` text from the main prompt box, and four others that replace that text in the prompt with an alternative zoom level. This will give us images of our character from a variety of distances.
+This tells the A1111 web UI that we want to generate images with three different permutations of our prompt - one that uses the original `an extreme closeup` text from the main prompt box, and two others that replace that text in the prompt with an alternative zoom level. This will give us images of our character from a variety of distances, while still (hopefully) keeping the focus on their face and shoulders.
 
-In the `Y values` text box, paste the following five viewing angles:
+In the `Y values` text box, paste the following three viewing angles:
 
 ```
-front shot, rear angle, side angle, shot from above, low angle shot
+front shot, side angle, low angle shot
 ```
 
-This tells the A1111 web UI that we want to generate images with five more permutations of our prompt - one that uses the original `front shot` viewing angle, and four others that replace that text with an alternative angle for viewing the character.
+This tells the A1111 web UI that we want to generate images with three more permutations of our prompt - one that uses the original `front shot` viewing angle, and two others that replace that text with an alternative angle for viewing the character.
 
-Because we have _two_ `Prompt S/R` options set for the script, with five variations in each, we've actually told A1111 to generate 25 permutations of our prompt - one for each combination of framing and viewing angle. This will give us lots of varieties of views of our character to choose from for training.
+Because we have _two_ `Prompt S/R` options set for the script, with three variations in each, we've actually told A1111 to generate 9 permutations of our prompt - one for each combination of framing and viewing angle. This will give us lots of varieties of views of our character to choose from for training.
 
 (Note: I borrowed these zoom levels and viewing angles from the [Unstable Diffusion tagging white paper](https://docs.google.com/document/d/1-DDIHVbsYfynTp_rsKLu4b2tSQgxtO5F6pNsNla12k0/edit).)
 
-Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` and `Batch Size` both to 4. This will generate 16 images for every permutation of the above, in batches of four for speed. (If your GPU can handle it, you can use a `Batch Count` of 2 and a `Batch Size` of 8 instead.)
+Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` and `Batch Size` both to 4. This will generate 16 (4 x 4) images for every permutation of the above. (If your GPU can handle it, you can use a `Batch Count` of 2 and a `Batch Size` of 8 instead.)
 
-With all of the above, we have asked A1111 to generate 400 images (16 x 5 x 5). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
+With all of the above, we have asked A1111 to generate 144 images (16 x 3 x 3). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
 
-> Note: You don't have to generate 400 images at this stage if you don't want too! If you have a slower GPU, or just can't be bothered to sort through that many images, then reduce it to 200, or 100, or whatever you prefer (by reducing the batch size and / or count). Personally, I like to generate a larger number of images and sort through them, so that I can choose just the very best and closest-matching images from the output. But you do you.
+> Note: You don't have to generate 144 images at this stage if you don't want too! If you have a slower GPU, or just can't be bothered to sort through that many images, then reduce the batch size and / or count for a lower total output. Personally, I like to generate a larger number of images, so that I can choose just the very best and closest-matching images from the output. But you do you.
 
 Here's how all of the generation settings look for me with today's A1111 interface:
 
 ![Input generation settings](images/step_1_input_generation_settings.jpg)
 
-
 # 2. Filtering input images
 
-You now have 400 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 400 images down to 25 or so _definitely_ good images to train with. Here's how I do that.
+You now have 144 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 144 images down to 8 _definitely_ good images to train with. Here's how I do that.
 
 ## Remove any images that are obviously off-prompt
 
-Here, I'd remove images where the character is clothed, or wearing jewelry, or has a non-matching hairstyle, or has their face off-screen, or the background isn't gray, or the arms / legs are funky, or there are multiple people, or… basically, anything that isn't what we asked for.
+Here, I'd remove images where the character is clothed, or wearing jewelry, or has a non-matching hairstyle, or has their face off-screen, or the background isn't gray, or there are multiple people, or… basically, anything that isn't what we asked for.
 
-Here's an example of some of the images I removed from my set of 400 at this step in the process. Note that I removed any images where the hairstyle did not have the requested bangs (fringe), to ensure consistency in the training images later on. This first pass removed 45 images. (Check the image alt tags for the reasons why I removed them.)
+Here's an example of some of the images I removed from my set of 144 at this step in the process. Note that I removed any images where the hairstyle did not have the requested bangs (fringe), to ensure consistency in the training images later on. This first pass removed 45 images. (Check the image alt tags for the reasons why I removed them.)
 
 <img src="images/step_2a_example_removal_1.png" width="128" height="128" alt="Non-matching hairstyle (doesn't have bangs)">
 <img src="images/step_2a_example_removal_2.png" width="128" height="128" alt="Wrong hair color; not entirely naked">
 
 ## Remove poor quality images
 
-This time, we're removing images that have wonky faces, or weird-looking nipples, or eyes that Restore Faces kinda messed up, or… images are just not a great photo of a person.
+This time, we're removing images that have wonky faces, or eyes that Restore Faces kinda messed up, or… images are just not a great photo of a person.
 
 Here's an example of an image I removed at this stage (66 in total).
 
@@ -161,9 +164,9 @@ For reference, I cut another 119 images in this step. This was partly because I 
 
 ## Fine-tune to just the best images
 
-This is really just a much more selective take on the second and third steps above, to narrow in to the best of the best images in the input set. I culled a ton of okay-but-not-really-adding-anything images at this step to get me to my final 25.
+This is really just a much more selective take on the second and third steps above, to narrow in to the best of the best images in the input set. I culled a ton of okay-but-not-really-adding-anything images at this step to get me to my final 8.
 
-Ideally, after doing all of the above, you will have 25 good-quality images left that look like the character you're aiming for. Even more ideally, the final set of images will contain a good representation of the five zoom levels and viewing angles. But don't worry if you don't have a complete representation of all angles and zooms - it's much more important that the images you choose are high-quality and look like your character.
+Ideally, after doing all of the above, you will have 8 good-quality images left that look like the character you're aiming for, typically showing their face and (optionally) shoulders / upper body. The most important thing is that the images you choose are high-quality and look like your character - and consistency is key. If your eight images don't look the same person, then your trained embedding won't either.
 
 # 3. Training an embedding on the input images
 
@@ -185,9 +188,9 @@ Head over to the `Train` tab in A1111, and select the `Create embedding` sub-tab
 
 When you create the embedding in the A1111 web interface, you also have the option to provide some `Initialization text`. By default this is `*` (an asterisk), which is a wildcard that does not provide any specific starting point for the training. I always change this to `woman`. This sets the starting point of your custom embedding's training to be everything that SD has already learned about the word `woman` from looking at millions of images from the Internet. In other words, it doesn't need to learn the woman-ness of the subject in the images; it just needs to learn the specific person-ness of your female character.
 
-Next up is the `Number of vectors per token` count. I always set this to `8`, which seems to work well for the number of input images I use. As I understand it, this is kind of the "capacity" of the embedding to store learned details of your character. Too low a vector count, and the embedding struggles to capture the essence of the character; too high a count, and it learns too much. (The count also seems to be related to, or at least sensitive to, the number of input images.)
+Next up is the `Number of vectors per token` count. I set this to `2`, which seems to work well when using eight input images.
 
-It's also important not to set the number of vectors per token _too_ high, because this number eats into the total number of vectors that can be used in a prompt before reaching the SD limit of 75. I figure that 8 vectors for the character leaves 67 for the prompt, so it's not too bad.
+> Note: Originally, this tutorial used a higher image count of 25, and a higher vector count of 8. Credit goes to user `aff_afc` on the Unstable Diffusion Discord server for convincing me that 8 images and 2 vectors can create embeddings that are just as good, if not better, than higher image and vector counts. As `aff_afc` has proven, you can even get away with 4 images and still get great results.
 
 Finally, I always check the `Overwrite Old Embedding` checkbox, so that if I mess things up with the training, and need to recreate an empty embedding to start over, I won't need to remember to check the box each time.
 
@@ -209,7 +212,7 @@ Select the embedding you just created (`fr3nchl4dysd15`) in the `Embedding` drop
 
 You can ignore the `Hypernetwork` dropdown and the `Hypernetwork Learning rate` field - those are only used when training a Hypernetwork, which we're not doing here.
 
-For 25 input images, I set `Embedded Learning rate` to `0.002`. This tells SD to train with a fixed, balanced rate of `0.002`.
+For 8 input images, I set `Embedded Learning rate` to `0.002`. This tells SD to train with a fixed, balanced rate of `0.002`.
 
 > Note: Previously I recommended a varied training rate, starting with a higher value such as `0.005`, and then lowering the rate after a certain number of steps. However, I've found that even with the exact same settings and images, multiple training runs can "turn" at a different point, due to the inherent randomness of the training process. This makes it hard to know when to change from one rate to the next, because the right step at which to change the rate will vary from run to run. I've found I get perfectly good results with a fixed learning rate, so I no longer advise a varying rate. 
 
@@ -249,7 +252,7 @@ Leave the `Width` and `Height` at their default values of `512`. There's no need
 
 ### Steps
 
-With all of the settings above, and an image dataset of 25 images, I find that the model tends to become well-trained somewhere between 100-120 training steps. To that end, I normally set `Max steps` to `150`.
+With all of the settings above, and an image dataset of 8 images, I find that the model tends to become well-trained somewhere between 100-120 training steps. To that end, I normally set `Max steps` to `150`.
 
 For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to `Save an image` to `5`, and `Save a copy of embedding` to `1`. Setting `image` to `5` asks SD to generate a "how am I doing?" image every five steps, so that you can visualize if it is definitely learning. Setting `embedding` to `1` means that you have "marker" embeddings for every step of the generation process, giving more precise scope for picking just the right "Goldilocks" iteration.
 
