@@ -2,7 +2,7 @@
 
 One of the great things about generating images with Stable Diffusion ("SD") is the sheer variety and flexibility of images it can output. However, some times it can be useful to get a _consistent_ output, where multiple images contain the "same person" in a variety of permutations.
 
-To that end, I've spent some time working on a technique for training Stable Diffusion to generate consistent made-up characters whose faces, bodies, and hair look essentially the same whenever you use them in a prompt. This tutorial is a description of the approach I use.
+To that end, I've spent some time working on a technique for training Stable Diffusion to generate consistent made-up characters whose face and hair look essentially the same whenever you use them in a prompt. This tutorial is a description of the approach I use.
 
 ## LastName characters
 
@@ -12,7 +12,7 @@ You can see [all of the "LastName" characters I've trained with this method on C
 
 If all goes to plan, by the end of this tutorial you will have created a Stable Diffusion [Textual Inversion embedding](https://arxiv.org/abs/2208.01618) that can reliably recreate a consistent character across multiple poses, SD checkpoints, hair styles, body types, and prompts.
 
-> Note: My primary aim with this tutorial is to create a character with a consistent _facial_ appearance whenever the character is used, and not a guaranteed consistent body shape. You _can_ train a body shape if you show SD more full-body images of a character, but I've found that body shape is something you can just as easily make consistent through prompting when generating images. Creating a consistent face, however, is something that really benefits from creating a Textual Inversion. Thanks go to `GalaxyTimeMachine` from the Unstable Diffusion Discord for convincing me of the value of focusing in on facial likenesses.
+> Note: My primary aim with this tutorial is to create a character with a consistent _facial_ appearance whenever the character is used, and not a guaranteed consistent body shape. You _can_ train a body shape if you show SD more full-body images of a character, but I've found that body shape is something you can just as easily make consistent through prompting when generating images. Creating a consistent face, however, is something that really benefits from a Textual Inversion embedding. Thanks go to `GalaxyTimeMachine` from the Unstable Diffusion Discord for convincing me of the value of focusing in on facial likeness as the primary goal of an embedding.
 
 ## Process
 
@@ -25,9 +25,9 @@ The creation process is split into four steps:
 
 # 1. Generating input images
 
-Training an AI is a classic example of "[garbage in, garbage out](https://en.wikipedia.org/wiki/Garbage_in,_garbage_out)". The better the input images you provide, the better the output you'll get. To that end, I use SD to generate the input images for the character I'm going to train. That way, I can generate lots of permutations based on a description of that character, and pick just the best images to use for the later training.
+Training an AI is a classic example of "[garbage in, garbage out](https://en.wikipedia.org/wiki/Garbage_in,_garbage_out)". The better the input images you provide, the better the output you'll get. To that end, I use SD to generate the input images for the character I'm going to train. That way, I can generate lots of permutations based on a description of that character, and pick just the best images for training.
 
-I generate these images via [Automatic1111's Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui) (I'll call it "A1111" below). I won't cover how to set up A1111 here; there are lots of tutorials available for getting A1111 up and running. But here's how I customize A1111 for input image generation.
+I generate these images via [Automatic1111's Stable Diffusion web UI](https://github.com/AUTOMATIC1111/stable-diffusion-webui), which I'll call it "A1111" below. (I won't cover how to set up A1111 here; there are lots of tutorials available for getting A1111 up and running.)
 
 ## Choosing a checkpoint for generating your input images
 
@@ -58,7 +58,7 @@ an extreme closeup front shot photo of a beautiful 25yo French woman with define
 For the negative prompt, try something like this:
 
 ```
-(gray hair:1.3), (glasses:1.2), (earrings:1.2), (necklace:1.2), (high heels:1.2), young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo
+(gray hair:1.3), (glasses:1.2), (earrings:1.2), (necklace:1.2), young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo
 ```
 
 Note that I've added `(gray hair:1.3)` to the negative prompt there. Boosting `neutral gray background` in the positive prompt has a tendency to cast a gray color over anything else with a specified colored in the prompt, so we need to counterbalance that for the black-colored hair to make sure we get the color we want. (This is a good trick whenever two colors in a prompt start to influence each other in a way you don't want.)
@@ -77,11 +77,11 @@ Next, set the following `txt2img` settings in A1111:
 
 These settings should give good-quality outputs, at the expense of slightly longer generation times. (But remember: garbage in, garbage out.)
 
-### Why naked and neutral?
+### Why neutral and naked?
 
 I like to make input images that are as "neutral" as possible, so that SD learns the essence of them without also learning things that we might want to change for variety in image generation prompts. So, I try to avoid generating images that contain things like glasses, earrings, necklaces, and so on, that might bias later generation to include those same items.
 
-I also choose to generate the training input images without clothes, because I want to train the base concept of a hypothetical human that I can then add any clothing or accessories to via custom prompts later on. SD has seen a lot of humans wearing a lot of different clothes, but it has never seen your custom character naked, so that's what we'll give it as input, for the most flexibility. (In practice, we're primarily going to be using generated images of our character's face and shoulders. However, I still find it easier if these images are defined to be naked.)
+I also choose to generate the training input images without clothes, because I want to train the base concept of a hypothetical human that I can then add any clothing or accessories to via custom prompts later on. SD has seen a lot of humans wearing a lot of different clothes, but it has never seen your custom character naked, so that's what we'll give it as input, for the most flexibility. (In practice, we're mostly going to be generating images of our character's face and shoulders, but I still find it easier if these images are defined to be naked, so that the shoulders are bare and we don't need to describe any clothing in the images.)
 
 I also use a neutral gray background in all my input images, to keep the training focused on the character on the foreground. (We'll tell SD that we used a neutral gray background later on, so that it doesn't learn "neutral gray background" as part of the character's attributes.)
 
@@ -123,7 +123,7 @@ Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` and `B
 
 With all of the above, we have asked A1111 to generate 144 images (16 x 3 x 3). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
 
-> Note: You don't have to generate 144 images at this stage if you don't want too! If you have a slower GPU, or just can't be bothered to sort through that many images, then reduce the batch size and / or count for a lower total output. Personally, I like to generate a larger number of images, so that I can choose just the very best and closest-matching images from the output. But you do you.
+> Note: You don't have to generate 144 images at this stage if you don't want to! If you have a slower GPU, or just can't be bothered to sort through that many images, then reduce the batch size and / or batch count for a lower total output. Personally, I like to generate a larger number of images, so that I can choose just the very best and closest-matching images from the output.
 
 Here's how all of the generation settings look for me with today's A1111 interface:
 
@@ -131,7 +131,7 @@ Here's how all of the generation settings look for me with today's A1111 interfa
 
 # 2. Filtering input images
 
-You now have 144 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 144 images down to 8 _definitely_ good images to train with. Here's how I do that.
+You now have 144 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 144 images down to 8 _definitely_ good images to train with.
 
 ## Remove any images that are obviously off-prompt
 
@@ -172,7 +172,7 @@ Ideally, after doing all of the above, you will have 8 good-quality images left 
 
 With the input images generated, it's time to train the embedding!
 
-The first (and easiest to forget) step is to switch A1111's `Stable Diffusion checkpoint` dropdown to reference one of the [base Stable Diffusion 1.5 checkpoints](https://huggingface.co/runwayml/stable-diffusion-v1-5). You always want to train an embedding against the base 1.5 checkpoint, so that it is as flexible as possible when applied to any other checkpoint that derives from the SD 1.5 base (which almost all of the popular checkpoints used with Stable Diffusion do). I use the smaller `v1-5-pruned-emaonly.ckpt` (4.27GB), but you can use the larger `v1-5-pruned.ckpt` (7.7GB) if you have it - either will work just fine for training a Textual Inversion.
+Before you go any further, switch A1111's `Stable Diffusion checkpoint` dropdown to reference one of the [base Stable Diffusion 1.5 checkpoints](https://huggingface.co/runwayml/stable-diffusion-v1-5). You _always_ want to train an embedding against a base 1.5 checkpoint, so that it is as flexible as possible when applied to any other SD 1.5 checkpoint. I use the smaller `v1-5-pruned-emaonly.safetensors` (4.27GB), but you can use the larger `v1-5-pruned.safetensors` (7.7GB) if you have it - either will work just fine for training a Textual Inversion.
 
 ## Naming your character
 
