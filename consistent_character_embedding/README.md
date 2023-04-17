@@ -220,7 +220,13 @@ I leave `Gradient Clipping` as `disabled`, and leave the value as `1`.
 
 ### Batch size and gradient accumulation steps
 
-Next up is `Batch size` and `Gradient accumulation steps`. These two settings (multiplied together) define how many images the trainer looks at before updating its understanding of what `fr3nchl4dysd15` means. I've seen quite a few tutorials that recommend setting these values higher than the defaults of `1` and `1`. If you do, `Batch size` will define how many images are loaded onto your GPU at once for learning, and `Gradient accumulation steps` will define how many of those batches are viewed by the trainer before updating its understanding of the concept it is learning. However, every time I tried using different (higher) values in these settings, I found that the output embedding did not generate images that matched the input images as closely as I would like (indeed, the higher the numbers, the more the variance). So I always use the default values of `1` and `1`.
+Next up is `Batch size` and `Gradient accumulation steps`. These two settings (multiplied together) define how many images the trainer looks at before updating its understanding of what `fr3nchl4dysd15` means. `Batch size` defines how many images are loaded onto your GPU at once for learning, and `Gradient accumulation steps` defines how many of those batches are viewed by the trainer before updating its understanding of the concept it is learning. In other words, `Batch size x Gradient accumulation steps` defines the number of images that SD looks at before updating its training.
+
+Ideally, you want the result of `Batch x Gradient` to be the same as the number of images you are training on, so that SD looks at every one of your input images before updating its understanding of the character. (And the result should never be _more_ than the number of input images.)
+
+If your GPU can handle it, the ideal (with 8 training images) is to set `Batch size` to `8`, and `Gradient accumulation steps` to `1`. This will give the fastest training possible. However, if that combo causes out-of-memory errors for your GPU during training, set `Batch size` to `4`, and `Gradient accumulation steps` to `2`. And if that _still_ doesn't work, try a `Batch` of `2` and a `Gradient` of `4`.
+
+### Input and output directories
 
 `Dataset directory` should be set to the path on disk (accessible to A1111) where the input images and tagging text files are stored. This can be whatever you like.
 
@@ -242,7 +248,7 @@ This file gets translated by SD into a training prompt for each input image. `[n
 a photo of fr3nchl4dysd15 naked, neutral gray background
 ```
 
-Note that for the training prompt, we've removed nearly all of the detail from the generation prompt, including the character's look, body shape, and hairstyle. We want SD to learn that all of those things combined are called `fr3nchl4dysd15`. It's kind of like saying we have "a photo of Marilyn Monroe", but instead of using the name "Marilyn Monroe", we're using the made-up name "`fr3nchl4dysd15`".
+Note that for the training prompt, we've removed nearly all of the detail from the generation prompt, including the character's look and hairstyle. We want SD to learn that all of those things combined are called `fr3nchl4dysd15`. It's kind of like saying we have "a photo of Marilyn Monroe", but instead of using the name "Marilyn Monroe", we're using the made-up name "`fr3nchl4dysd15`".
 
 We do, however, want to tell the training process about all of the things that are _not_ the essence of our character in each image. For example: our training images have a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to keep the "neutral gray background" tag when each image is used for training, so that the trainer knows that "neutral gray background" is not an attribute of our character. We likewise don't want the character to always be naked, so we'll keep "naked" in our training prompt too.
 
@@ -254,7 +260,7 @@ Leave the `Width` and `Height` at their default values of `512`. There's no need
 
 With all of the settings above, and an image dataset of 8 images, I find that the model tends to become well-trained somewhere between 100-120 training steps. To that end, I normally set `Max steps` to `150`.
 
-For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set these to `Save an image` to `5`, and `Save a copy of embedding` to `1`. Setting `image` to `5` asks SD to generate a "how am I doing?" image every five steps, so that you can visualize if it is definitely learning. Setting `embedding` to `1` means that you have "marker" embeddings for every step of the generation process, giving more precise scope for picking just the right "Goldilocks" iteration.
+For `Save an image to log directory every N steps, 0 to disable` and `Save a copy of embedding to log directory every N steps, 0 to disable`, I usually set `Save an image` to `5`, and `Save a copy of embedding` to `1`. Setting `image` to `5` asks SD to generate a "how am I doing?" image every five steps, so that you can visualize if it is definitely learning. Setting `embedding` to `1` means that you have "marker" embeddings for every step of the generation process, giving more precise scope for picking just the right "Goldilocks" iteration.
 
 ### Training options
 
