@@ -180,11 +180,11 @@ Now's the time to decide on the name of your character (and the output embedding
 
 If you're not sure your choice of embedding name / token is unique enough, just try sticking it in a `txt2img` prompt all by itself, and generating a few images with the base SD1.5 checkpoint to see what SD thinks that token already means.
 
-For the purposes of this tutorial, let's call our character `fr3nchl4dysd15`.
+For the purposes of this tutorial, let's call our character `fr3nchl4dy`.
 
 ## Creating a new Embedding
 
-Head over to the `Train` tab in A1111, and select the `Create embedding` sub-tab. Enter the name of your embedding / character (`fr3nchl4dysd15` in our case) in the `Name` box. This primarily defines the name of the output embedding file on disk, but that filename also defines what you will use in your prompts to generate images with your embedding. (If ever you want to change the token that you use in prompts, just rename the embedding on disk.)
+Head over to the `Train` tab in A1111, and select the `Create embedding` sub-tab. Enter the name of your embedding / character (`fr3nchl4dy` in our case) in the `Name` box. This primarily defines the name of the output embedding file on disk, but that filename also defines what you will use in your prompts to generate images with your embedding. (If ever you want to change the token that you use in prompts, just rename the embedding on disk.)
 
 When you create the embedding in the A1111 web interface, you also have the option to provide some `Initialization text`. By default this is `*` (an asterisk), which is a wildcard that does not provide any specific starting point for the training. I always change this to `woman`. This sets the starting point of your custom embedding's training to be everything that SD has already learned about the word `woman` from looking at millions of images from the Internet. In other words, it doesn't need to learn the woman-ness of the subject in the images; it just needs to learn the specific person-ness of your female character.
 
@@ -194,7 +194,7 @@ Next up is the `Number of vectors per token` count. I set this to `2`, which see
 
 Finally, I always check the `Overwrite Old Embedding` checkbox, so that if I mess things up with the training, and need to recreate an empty embedding to start over, I won't need to remember to check the box each time.
 
-With all of that set, click `Create embedding` to write a new, empty embedding `fr3nchl4dysd15.pt` inside the `/embeddings` folder of your A1111 installation, ready for training.
+With all of that set, click `Create embedding` to write a new, empty embedding `fr3nchl4dy.pt` inside the `/embeddings` folder of your A1111 installation, ready for training.
 
 Here's how all of those settings look in A1111:
 
@@ -208,7 +208,7 @@ Next, head over to the `Train` sub-tab. I'll cover all of the training settings 
 
 ### Basic settings
 
-Select the embedding you just created (`fr3nchl4dysd15`) in the `Embedding` drop-down.
+Select the embedding you just created (`fr3nchl4dy`) in the `Embedding` drop-down.
 
 You can ignore the `Hypernetwork` dropdown and the `Hypernetwork Learning rate` field - those are only used when training a Hypernetwork, which we're not doing here.
 
@@ -220,7 +220,7 @@ I leave `Gradient Clipping` as `disabled`, and leave the value as `1`.
 
 ### Batch size and gradient accumulation steps
 
-Next up is `Batch size` and `Gradient accumulation steps`. These two settings (multiplied together) define how many images the trainer looks at before updating its understanding of what `fr3nchl4dysd15` means. `Batch size` defines how many images are loaded onto your GPU at once for learning, and `Gradient accumulation steps` defines how many of those batches are viewed by the trainer before updating its understanding of the concept it is learning. In other words, `Batch size x Gradient accumulation steps` defines the number of images that SD looks at before updating its training.
+Next up is `Batch size` and `Gradient accumulation steps`. These two settings (multiplied together) define how many images the trainer looks at before updating its understanding of what `fr3nchl4dy` means. `Batch size` defines how many images are loaded onto your GPU at once for learning, and `Gradient accumulation steps` defines how many of those batches are viewed by the trainer before updating its understanding of the concept it is learning. In other words, `Batch size x Gradient accumulation steps` defines the number of images that SD looks at before updating its training.
 
 Ideally, you want the result of `Batch x Gradient` to be the same as the number of images you are training on, so that SD looks at every one of your input images before updating its understanding of the character. (And the result should never be _more_ than the number of input images.)
 
@@ -242,13 +242,13 @@ For this process, I use a custom prompt template, which goes in the `textual_inv
 a photo of [name] naked, neutral gray background
 ```
 
-This file gets translated by SD into a training prompt for each input image. `[name]` is replaced with the name of the embedding (`fr3nchl4dysd15`). So, for each of our images, the combined training prompt from this text file will be:
+This file gets translated by SD into a training prompt for each input image. `[name]` is replaced with the name of the embedding (`fr3nchl4dy`). So, for each of our images, the combined training prompt from this text file will be:
 
 ```
-a photo of fr3nchl4dysd15 naked, neutral gray background
+a photo of fr3nchl4dy naked, neutral gray background
 ```
 
-Note that for the training prompt, we've removed nearly all of the detail from the generation prompt, including the character's look and hairstyle. We want SD to learn that all of those things combined are called `fr3nchl4dysd15`. It's kind of like saying we have "a photo of Marilyn Monroe", but instead of using the name "Marilyn Monroe", we're using the made-up name "`fr3nchl4dysd15`".
+Note that for the training prompt, we've removed nearly all of the detail from the generation prompt, including the character's look and hairstyle. We want SD to learn that all of those things combined are called `fr3nchl4dy`. It's kind of like saying we have "a photo of Marilyn Monroe", but instead of using the name "Marilyn Monroe", we're using the made-up name "`fr3nchl4dy`".
 
 We do, however, want to tell the training process about all of the things that are _not_ the essence of our character in each image. For example: our training images have a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to keep the "neutral gray background" tag when each image is used for training, so that the trainer knows that "neutral gray background" is not an attribute of our character. We likewise don't want the character to always be naked, so we'll keep "naked" in our training prompt too.
 
@@ -286,15 +286,15 @@ Don't worry if a few of the early images are weird, or don't even contain a pers
 
 # 4. Choosing and validating a particular iteration of the trained embedding
 
-Okay! We're nearly there. The final step is to identify the "Goldilocks" iteration of our trained embedding - the one where it is "just right". We're looking for an iteration where prompts for `fr3nchl4dysd15` generate an image that looks just like our character (so it's "not too cold"), without showing generation artifacts where the character looks over-stylized or distorted (so it's "not too hot").
+Okay! We're nearly there. The final step is to identify the "Goldilocks" iteration of our trained embedding - the one where it is "just right". We're looking for an iteration where prompts for `fr3nchl4dy` generate an image that looks just like our character (so it's "not too cold"), without showing generation artifacts where the character looks over-stylized or distorted (so it's "not too hot").
 
 To put it another way: training a Textual Inversion embedding is a bit like baking cookies. If you don't bake them for long enough, then they don't turn into cookies - they're still raw dough. But if you bake them for too long, they become burned and frazzled, and they don't look (or taste) good. What you're looking for is the training iteration of your embedding that is the perfect cookie - baked, but not over-baked.
 
 ## Validation setup
 
-The best way to find out when your embedding turned into an embedding of `fr3nchl4dysd15` is to generate a bunch of sample images, for the same input seeds, with a range of embeddings from different steps in the training process.
+The best way to find out when your embedding turned into an embedding of `fr3nchl4dy` is to generate a bunch of sample images, for the same input seeds, with a range of embeddings from different steps in the training process.
 
-After following the training process from step 4 above, you should be able to navigate to A1111's `textual_inversion` folder on disk, and find a folder for today's date. Inside it, you should find a folder named `fr3nchl4dysd15`. This folder is the results of your training. (I recommend copying the folder somewhere else on your computer, so that it doesn't get overwritten if you train again.)
+After following the training process from step 4 above, you should be able to navigate to A1111's `textual_inversion` folder on disk, and find a folder for today's date. Inside it, you should find a folder named `fr3nchl4dy`. This folder is the results of your training. (I recommend copying the folder somewhere else on your computer, so that it doesn't get overwritten if you train again.)
 
 Next, copy all of the embeddings (yes, _all_ of them) from that folder into A1111's root-level `embeddings` folder. (This is the folder where A1111 looks for embeddings to use in prompts.) Once they are copied, head over to the `txt2img` tab, and click the "Show/hide extra networks" icon underneath the orange `Generate` button. This will show a bunch of cards for all of the embeddings that A1111 currently knows about. Click the `Refresh` button (to the right of the `Search…` field) to reload the `embeddings` folder, which will inform A1111 about all of the new embeddings you just copied. (If you don't perform this "refresh" step, A1111 won't use your embeddings in its prompts.)
 
@@ -321,7 +321,7 @@ In the `txt2img` tab, set the following generation settings:
 The prompt I usually use for detecting the right `Steps` value to use is:
 
 ```
-a medium closeup color portrait photo of fr3nchl4dysd15-20 wearing a bra on a greek island
+a medium closeup color portrait photo of fr3nchl4dy-20 wearing a bra on a greek island
 ```
 
 Set the `Negative prompt` field to:
@@ -334,14 +334,14 @@ young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, b
 
 We'll start by generating a coarse comparison between every 20 steps of the training, so we can see roughly where the embedding "turned" into our character.
 
-Note that the `Prompt` text above specifies a particular generation of the embedding's training - `fr3nchl4dysd15-20`. We know we have a 20-steps-of-training embedding file with the name `fr3nchl4dysd15-20.pt` in the `embeddings` folder, and so that iteration of the embedding will be used by default with this prompt.
+Note that the `Prompt` text above specifies a particular generation of the embedding's training - `fr3nchl4dy-20`. We know we have a 20-steps-of-training embedding file with the name `fr3nchl4dy-20.pt` in the `embeddings` folder, and so that iteration of the embedding will be used by default with this prompt.
 
 Next, from the `Script` drop-down menu, select `X/Y/Z plot`. Set `X type` to `Prompt S/R`. Set `Y type` and `Z type` to `Nothing`.
 
 Set `X values` to the following (assuming you generated 150 steps when training):
 
 ```
-fr3nchl4dysd15-20, fr3nchl4dysd15-40, fr3nchl4dysd15-60, fr3nchl4dysd15-80, fr3nchl4dysd15-100, fr3nchl4dysd15-120, fr3nchl4dysd15-140
+fr3nchl4dy-20, fr3nchl4dy-40, fr3nchl4dy-60, fr3nchl4dy-80, fr3nchl4dy-100, fr3nchl4dy-120, fr3nchl4dy-140
 ```
 
 This tells A1111 to generate a set of 4 images for each embedding training iteration that was a multiple of 20 (so 20, 40, 60, and so on).
@@ -373,17 +373,17 @@ However, if we look a little further ahead, we can see that things really start 
 
 To narrow things down further, we'll generate a second comparison image, this time using the embeddings we generated every five iterations between 40 and 80 steps.
 
-Change the `X values` box to the following, and generate another grid for the two checkpoints (replacing `fr3nchl4dysd15-20` with `fr3nchl4dysd15-40` in the prompt as the new starting value):
+Change the `X values` box to the following, and generate another grid for the two checkpoints (replacing `fr3nchl4dy-20` with `fr3nchl4dy-40` in the prompt as the new starting value):
 
 ```
-fr3nchl4dysd15-40, fr3nchl4dysd15-45, fr3nchl4dysd15-50, fr3nchl4dysd15-55, fr3nchl4dysd15-60, fr3nchl4dysd15-65, fr3nchl4dysd15-70, fr3nchl4dysd15-75, fr3nchl4dysd15-80
+fr3nchl4dy-40, fr3nchl4dy-45, fr3nchl4dy-50, fr3nchl4dy-55, fr3nchl4dy-60, fr3nchl4dy-65, fr3nchl4dy-70, fr3nchl4dy-75, fr3nchl4dy-80
 ```
 
 You're looking for the first iteration where all four of the images are definitely recognizably your character. For me, this turned out to be step 55.
 
 ## Validating the candidate embedding
 
-We have now identified a candidate embedding. To validate it further, turn off the X/Y/Z plot script, and try generating batches of four images (each using the same starting seed) for the same prompt as above, using your candidate iteration (`fr3nchl4dysd15-55`, in my case) with a variety of different checkpoints from CivitAI. The goal here is to check that the iteration you selected adapts well to multiple different SD checkpoints.
+We have now identified a candidate embedding. To validate it further, turn off the X/Y/Z plot script, and try generating batches of four images (each using the same starting seed) for the same prompt as above, using your candidate iteration (`fr3nchl4dy-55`, in my case) with a variety of different checkpoints from CivitAI. The goal here is to check that the iteration you selected adapts well to multiple different SD checkpoints.
 
 I deliberately generate these images with a non-standard size of 512x768, to see how well the embedding adapts.
 
@@ -409,7 +409,7 @@ The results look good and pretty consistent for each checkpoint, which suggests 
 
 ## Using your Embedding
 
-Now that you've selected the ideal embedding iteration, you can rename it to just `fr3nchl4dysd15.pt` (rather than `fr3nchl4dysd15-55.pt`), and use it in your own prompts. If you'd like to download the result I used above, [here it is](fr3nchl4dysd15.pt). Just drop that file in A1111's `embeddings` folder, and refresh the embeddings list to use it.
+Now that you've selected the ideal embedding iteration, you can rename it to just `fr3nchl4dy.pt` (rather than `fr3nchl4dy-55.pt`), and use it in your own prompts. If you'd like to download the result I used above, [here it is](fr3nchl4dy.pt). Just drop that file in A1111's `embeddings` folder, and refresh the embeddings list to use it.
 
 # Questions? Comments? Feedback?
 
