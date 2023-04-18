@@ -117,8 +117,6 @@ This tells the A1111 web UI that we want to generate images with three more perm
 
 Because we have _two_ `Prompt S/R` options set for the script, with three variations in each, we've actually told A1111 to generate 9 permutations of our prompt - one for each combination of framing and viewing angle. This will give us lots of varieties of views of our character to choose from for training.
 
-(Note: I borrowed these zoom levels and viewing angles from the [Unstable Diffusion tagging white paper](https://docs.google.com/document/d/1-DDIHVbsYfynTp_rsKLu4b2tSQgxtO5F6pNsNla12k0/edit).)
-
 Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` and `Batch Size` both to 4. This will generate 16 (4 x 4) images for every permutation of the above. (If your GPU can handle it, you can use a `Batch Count` of 2 and a `Batch Size` of 8 instead.)
 
 With all of the above, we have asked A1111 to generate 144 images (16 x 3 x 3). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
