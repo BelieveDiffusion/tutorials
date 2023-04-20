@@ -31,7 +31,7 @@ I generate these images via [Automatic1111's Stable Diffusion web UI](https://gi
 
 ## Choosing a checkpoint for generating your input images
 
-You can use any SD checkpoint you like to generate your input images, although it's essential that the model you choose has seen (and can generate) representative examples like your character. I've been creating photorealistic made-up characters, and I've found [Deliberate](https://civitai.com/models/4823/deliberate) (v2) to be a good, flexible checkpoint for that, but there are plenty of other checkpoints available on sites like [CivitAI](https://civitai.com/).
+You can use any SD checkpoint you like to generate your input images, although it's essential that the model you choose has seen (and can generate) representative examples like your character. I've been creating photorealistic made-up characters, and I've found [Realistic Vision v2.0](https://civitai.com/models/4201/realistic-vision-v20) to be a good, flexible checkpoint for that, but there are plenty of other checkpoints available on sites like [CivitAI](https://civitai.com/).
 
 ## Setting up an input prompt
 
@@ -58,7 +58,7 @@ an extreme closeup front shot photo of a beautiful 25yo French woman with define
 For the negative prompt, try something like this:
 
 ```
-(gray hair:1.3), (glasses:1.2), (earrings:1.2), (necklace:1.2), young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo
+(gray hair:1.3), (glasses:1.2), (earrings:1.2), (necklace:1.2), young, child, sketch, comic, disfigured, cartoon, 3d
 ```
 
 Note that I've added `(gray hair:1.3)` to the negative prompt there. Boosting `neutral gray background` in the positive prompt has a tendency to cast a gray color over anything else with a specified colored in the prompt, so we need to counterbalance that for the black-colored hair to make sure we get the color we want. (This is a good trick whenever two colors in a prompt start to influence each other in a way you don't want.)
@@ -117,11 +117,11 @@ This tells the A1111 web UI that we want to generate images with three more perm
 
 Because we have _two_ `Prompt S/R` options set for the script, with three variations in each, we've actually told A1111 to generate 9 permutations of our prompt - one for each combination of framing and viewing angle. This will give us lots of varieties of views of our character to choose from for training.
 
-Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` and `Batch Size` both to 4. This will generate 16 (4 x 4) images for every permutation of the above. (If your GPU can handle it, you can use a `Batch Count` of 2 and a `Batch Size` of 8 instead.)
+Finally, check the box next to `Keep -1 for seeds`, and set `Batch Count` to 8 and `Batch Size` to 4. This will generate 32 (8 x 4) images for every permutation of the above. (If your GPU can handle it, you can use a `Batch Count` of 4 and a `Batch Size` of 8 instead.)
 
-With all of the above, we have asked A1111 to generate 144 images (16 x 3 x 3). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
+With all of the above, we have asked A1111 to generate 288 images (32 x 3 x 3). Hit the `Generate` button, and leave A1111 to do its thing. Maybe make a hot beverage. Step 1 is complete!
 
-> Note: You don't have to generate 144 images at this stage if you don't want to! If you have a slower GPU, or don't want to sort through that many images, then reduce the batch size and / or batch count for a lower total output. Personally, I like to generate a larger number of images, so that I can choose just the very best and closest-matching images from the output.
+> Note: You don't have to generate 288 images at this stage if you don't want to! If you have a slower GPU, or don't want to sort through that many images, then reduce the batch size and / or batch count for a lower total output. Personally, I like to generate a larger number of images, so that I can choose just the very best and closest-matching images from the output.
 
 Here's how all of the generation settings look for me with today's A1111 interface:
 
@@ -129,24 +129,27 @@ Here's how all of the generation settings look for me with today's A1111 interfa
 
 # 2. Filtering input images
 
-You now have 144 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 144 images down to 8 _definitely_ good images to train with.
+You now have 288 _possibly_ good images that _possibly_ look like the character you're trying to create. The next step is to filter these 288 images down to 8 _definitely_ good images to train with. (Yep, we're going to throw away nearly all of them.)
 
 ## Remove any images that are obviously off-prompt
 
 Here, I'd remove images where the character is clothed, or wearing jewelry, or has a non-matching hairstyle, or has their face off-screen, or the background isn't gray, or there are multiple people, or… basically, anything that isn't what we asked for.
 
-Here's an example of some of the images I removed from my set of 144 at this step in the process. Note that I removed any images where the hairstyle did not have the requested bangs (fringe), to ensure consistency in the training images later on. This first pass removed 45 images. (Check the image alt tags for the reasons why I removed them.)
+Here's an example of some of the images I removed from my set of 288 at this step in the process. Note that I removed any images where the hairstyle did not have the requested bangs (fringe), to ensure consistency in the training images later on. This first pass removed 39 images.
 
-<img src="images/step_2a_example_removal_1.png" width="128" height="128" alt="Non-matching hairstyle (doesn't have bangs)">
-<img src="images/step_2a_example_removal_2.png" width="128" height="128" alt="Wrong hair color; not entirely naked">
+<img src="images/step_2a_example_removal_1.jpg" width="128" height="128">
+<img src="images/step_2a_example_removal_2.jpg" width="128" height="128">
+<img src="images/step_2a_example_removal_3.jpg" width="128" height="128">
 
 ## Remove poor quality images
 
-This time, we're removing images that have wonky faces, or eyes that Restore Faces kinda messed up, or… images are just not a great photo of a person.
+This time, we're removing images that have wonky faces, or eyes that Restore Faces kinda messed up, or… images are just not a great photo of a person. I also removed more images at this stage where the face was a little _too_ extreme closeup, or the hair wasn't the style or length that I wanted.
 
-Here's an example of an image I removed at this stage (66 in total).
+Here's an example of an image I removed at this stage (79 in total).
 
-<img src="images/step_2b_example_removal_1.png" width="128" height="128" alt="Mismatched eye shapes">
+<img src="images/step_2b_example_removal_1.jpg" width="128" height="128">
+<img src="images/step_2b_example_removal_2.jpg" width="128" height="128">
+<img src="images/step_2b_example_removal_3.jpg" width="128" height="128">
 
 ## Remove images that don't "look like the character"
 
@@ -154,17 +157,21 @@ This might seem like a weird thing to say. This person doesn't exist! How do we 
 
 Well: that's for you to define. There will usually be an overall "look" to the character already by this point, and some of the images won't match that look nearly as well as the others. So, filter those images out, and narrow in on the look of the specific person you're trying to create.
 
-For reference, I cut another 119 images in this step. This was partly because I decided to enforce a slightly more consistent hair length for the bob haircut, and partly because I used this stage to really hone in on the look of the character. Here are some examples of the images I cut. (And I should stress that this is _not_ an exact science.)
+For reference, I cut another 107 images in this step. This was partly because I decided to enforce a slightly more consistent hair length for the bob haircut, and partly because I used this stage to really hone in on the look of the character. Here are some examples of the images I cut.
 	
-<img src="images/step_2c_example_removal_1.png" width="128" height="128" alt="Didn't match character look; hair too short">
-<img src="images/step_2c_example_removal_2.png" width="128" height="128" alt="Didn't match character look; hair too short">
-<img src="images/step_2c_example_removal_3.png" width="128" height="128" alt="Didn't match character look; hair too short">
+<img src="images/step_2c_example_removal_1.jpg" width="128" height="128">
+<img src="images/step_2c_example_removal_2.jpg" width="128" height="128">
+<img src="images/step_2c_example_removal_3.jpg" width="128" height="128">
 
 ## Fine-tune to just the best images
 
 This is really just a much more selective take on the second and third steps above, to narrow in to the best of the best images in the input set. I culled a ton of okay-but-not-really-adding-anything images at this step to get me to my final 8.
 
 Ideally, after doing all of the above, you will have 8 good-quality images left that look like the character you're aiming for, typically showing their face and (optionally) shoulders / upper body. The most important thing is that the images you choose are high-quality and look like your character - and consistency is key. If your eight images don't look the same person, then your trained embedding won't either.
+
+Here are the results of this final step for me (I've masked part of one of the images below, but only to avoid displaying nudity here):
+
+<img src="images/step_2d_results.jpg" width="512" height="256">
 
 # 3. Training an embedding on the input images
 
@@ -202,7 +209,7 @@ Here's how all of those settings look in A1111:
 
 Next, head over to the `Train` sub-tab. I'll cover all of the training settings below, but if you just want a summary, here's how my settings look in A1111:
 
-![Training settings](images/step_3_train_settings_5_step_150.jpg)
+![Training settings](images/step_3_training_settings.jpg)
 
 ### Basic settings
 
@@ -237,18 +244,18 @@ I usually leave `Log directory` at the default value.
 For this process, I use a custom prompt template, which goes in the `textual_inversion_templates` folder of your A1111 installation. I call it `subject_naked_gray.txt`, and it contains just the following text:
 
 ```
-a photo of [name] naked, neutral gray background
+a closeup photo of [name] naked, neutral gray background
 ```
 
 This file gets translated by SD into a training prompt for each input image. `[name]` is replaced with the name of the embedding (`fr3nchl4dy`). So, for each of our images, the combined training prompt from this text file will be:
 
 ```
-a photo of fr3nchl4dy naked, neutral gray background
+a closeup photo of fr3nchl4dy naked, neutral gray background
 ```
 
 Note that for the training prompt, we've removed nearly all of the detail from the generation prompt, including the character's look and hairstyle. We want SD to learn that all of those things combined are called `fr3nchl4dy`. It's kind of like saying we have "a photo of Marilyn Monroe", but instead of using the name "Marilyn Monroe", we're using the made-up name "`fr3nchl4dy`".
 
-We do, however, want to tell the training process about all of the things that are _not_ the essence of our character in each image. For example: our training images have a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to keep the "neutral gray background" tag when each image is used for training, so that the trainer knows that "neutral gray background" is not an attribute of our character. We likewise don't want the character to always be naked, so we'll keep "naked" in our training prompt too.
+We do, however, want to tell the training process about all of the things that are _not_ the essence of our character in each image. For example: our training images have a neutral gray background, but we don't always want our character to appear in images with neutral gray backgrounds. So, we want to keep the "neutral gray background" tag when each image is used for training, so that the trainer knows that "neutral gray background" is not an attribute of our character. We likewise don't want the character to always be naked, so we'll keep "naked" in our training prompt too. And these are specifically closeup photos of our character, so let's specify that too. (This has the added advantage of generating closeup images during training, which helps us spot if the face in those closeups is trending towards our desired character's look.)
 
 ### Image size
 
@@ -272,7 +279,7 @@ I also leave the `Read parameters (prompt, etc...) from txt2img tab when making 
 
 I leave `Shuffle tags by ',' when creating prompts` unchecked, and leave `Drop out tags when creating prompts` at `0`. I've heard that this can provide more flexibility to the range of input prompts that can be used with an embedding, but I prefer to keep the prompts in the exact order and format I authored them, so I don't enable these options.
 
-Finally, I leave `Choose latent sampling method` at `once`.
+Finally, I leave `Choose latent sampling method` as `once`.
 
 ## Running the training
 
@@ -322,13 +329,11 @@ The prompt I usually use for detecting the right `Steps` value to use is:
 a medium closeup color portrait photo of fr3nchl4dy-20 wearing a bra on a greek island
 ```
 
-Set the `Negative prompt` field to:
+I also clear the `Negative prompt` field. That's right: I generate the validation images _without_ a negative prompt. There are two reasons for this:
 
-```
-young, loli, teen, child, (deformed, distorted, disfigured:1.3), poorly drawn, bad anatomy, wrong anatomy, extra limb, missing limb, floating limbs, (mutated hands and fingers:1.4), disconnected limbs, mutation, mutated, ugly, disgusting, blurry, amputation, tattoo
-```
+1. At the point where SD has learned what `fr3nchl4dy` looks like, it should be able to generate a image of that character's face _without_ requiring any negative prompts to fix things. If it can't do that, then we didn't train the character's face successfully.
 
-(…or your own preferred negative prompt.)
+2. Negative prompts inevitably pull each generated image in a certain direction - that's what they are there for, after all. Depending on the negative prompt, this can end up making the generated output look different to the input, just because the negative prompt ends up negating or modifying some of the learned characteristics in the embedding. And for validation, we want to see exactly what's in the embedding itself.
 
 We'll start by generating a coarse comparison between every 20 steps of the training, so we can see roughly where the embedding "turned" into our character.
 
@@ -350,13 +355,13 @@ Here's how those validation settings look for me:
 
 ![Validation settings](images/step_4_validation_settings.jpg)
 
-I recommend running this against the model you used to create the original input images (in my case, Deliberate v2), and also against the Stable Diffusion 1.5 base model. I've included examples of both below.
+I recommend running this against the model you used to create the original input images (in my case, RealisticVision v2.0), and also against the Stable Diffusion 1.5 base model. I've included examples of both below.
 
 The generation process may take several minutes, and will generate a big image. I've cropped it down to show some select iterations below.
 
 ## Finding out when the embedding became "good"
 
-If we look at the output of this prompt after 20 training steps, we can see that it doesn't really look much like our character yet (SD 1.5 on the left, Deliberate v2 on the right):
+If we look at the output of this prompt after 20 training steps, we can see that it doesn't really look much like our character yet (SD 1.5 on the left, RealisticVision v2.0 on the right):
 
 <img src="images/step_4_coarse_sd15_bra_greek_island_step_20.jpg" width="256" height="296" alt="Validation output after 20 steps of training - SD 1.5">
 <img src="images/step_4_coarse_deliberate_bra_greek_island_step_20.jpg" width="256" height="296" alt="Validation output after 20 steps of training - Deliberate v2">
