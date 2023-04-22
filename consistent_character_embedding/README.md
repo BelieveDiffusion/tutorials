@@ -193,9 +193,9 @@ Head over to the `Train` tab in A1111, and select the `Create embedding` sub-tab
 
 When you create the embedding in the A1111 web interface, you also have the option to provide some `Initialization text`. By default this is `*` (an asterisk), which is a wildcard that does not provide any specific starting point for the training. I always change this to `woman`. This sets the starting point of your custom embedding's training to be everything that SD has already learned about the word `woman` from looking at millions of images from the Internet. In other words, it doesn't need to learn the woman-ness of the subject in the images; it just needs to learn the specific person-ness of your female character.
 
-Next up is the `Number of vectors per token` count. I set this to `2`, which seems to work well when using eight input images.
+Next up is the `Number of vectors per token` count. After extensive experimentation, I've found that a vector count of `4` gives the right amount of capacity to learn the details of a human face. (Anything less than 4 is not quite enough to capture the full essence of the face; anything higher than 4 doesn't seem to make a notable difference.)
 
-> Note: Originally, this tutorial used a higher image count of 25, and a higher vector count of 8. Credit goes to user `aff_afc` on the Unstable Diffusion Discord server for convincing me that 8 images and 2 vectors can create embeddings that are just as good, if not better, than higher image and vector counts. As `aff_afc` has proven, you can even get away with 4 images and still get great results.
+> Note: Originally, this tutorial used a higher image count of 25, and a higher vector count of 8. I've done a bunch of testing - literally hundreds of test training runs - and I've found that 8 images and 4 vectors is a better combination of numbers to create a good TI. More images is not necessarily better for a TI, it turns out.
 
 Finally, I always check the `Overwrite Old Embedding` checkbox, so that if I mess things up with the training, and need to recreate an empty embedding to start over, I won't need to remember to check the box each time.
 
